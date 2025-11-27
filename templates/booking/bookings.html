@@ -40,7 +40,6 @@
                         <th>Выезд</th>
                         <th>Взрослых</th>
                         <th>Детей</th>
-                        <th>Стоимость</th>
                         <th>Действия</th>
                     </tr>
                 </thead>
@@ -54,7 +53,6 @@
                         <td>{{ booking.check_out_date|date:"d.m.Y" }}</td>
                         <td>{{ booking.adults_count }}</td>
                         <td>{{ booking.children_count }}</td>
-                        <td><strong>{{ booking.total_price }} ₽</strong></td>
                         <td>
                             <a href="{% url 'booking:booking_detail' booking.pk %}" class="btn btn-sm btn-info">
                                 <i class="bi bi-eye"></i> Просмотр

@@ -125,13 +125,6 @@
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label for="{{ form.total_price.id_for_label }}" class="form-label">Стоимость проживания *</label>
-                        {{ form.total_price }}
-                        {% if form.total_price.errors %}
-                            <div class="text-danger">{{ form.total_price.errors }}</div>
-                        {% endif %}
-                    </div>
-                    <div class="mb-3">
                         <label for="{{ form.special_requests.id_for_label }}" class="form-label">Пожелания</label>
                         {{ form.special_requests }}
                         {% if form.special_requests.errors %}

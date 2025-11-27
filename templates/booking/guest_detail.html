@@ -52,7 +52,6 @@
                         <th>Номер</th>
                         <th>Дата заезда</th>
                         <th>Дата выезда</th>
-                        <th>Стоимость</th>
                         <th>Действия</th>
                     </tr>
                 </thead>
@@ -62,7 +61,6 @@
                         <td>{{ booking.room.name }} ({{ booking.room.number }})</td>
                         <td>{{ booking.check_in_date|date:"d.m.Y" }}</td>
                         <td>{{ booking.check_out_date|date:"d.m.Y" }}</td>
-                        <td>{{ booking.total_price }} ₽</td>
                         <td>
                             <a href="{% url 'booking:booking_detail' booking.pk %}" class="btn btn-sm btn-info">
                                 <i class="bi bi-eye"></i> Просмотр
