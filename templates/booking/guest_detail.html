@@ -1,0 +1,89 @@
+{% extends 'booking/base.html' %}
+
+{% block title %}{{ guest.full_name }} - Система бронирования отелей{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <h1>{{ guest.full_name }}</h1>
+        <hr>
+        <h3>Контактная информация</h3>
+        <table class="table">
+            <tr>
+                <th>Телефон:</th>
+                <td>{{ guest.phone }}</td>
+            </tr>
+            <tr>
+                <th>Email:</th>
+                <td>{{ guest.email|default:"—" }}</td>
+            </tr>
+            <tr>
+                <th>Номер паспорта:</th>
+                <td>{{ guest.passport_number }}</td>
+            </tr>
+            <tr>
+                <th>Дата регистрации:</th>
+                <td>{{ guest.created_at|date:"d.m.Y H:i" }}</td>
+            </tr>
+        </table>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Информация</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>ID:</strong> {{ guest.guest_id }}</p>
+                <p><strong>Создан:</strong> {{ guest.created_at|date:"d.m.Y" }}</p>
+                <p><strong>Обновлен:</strong> {{ guest.updated_at|date:"d.m.Y" }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <h3>История бронирований</h3>
+        {% if bookings %}
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Номер</th>
+                        <th>Дата заезда</th>
+                        <th>Дата выезда</th>
+                        <th>Стоимость</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for booking in bookings %}
+                    <tr>
+                        <td>{{ booking.room.name }} ({{ booking.room.number }})</td>
+                        <td>{{ booking.check_in_date|date:"d.m.Y" }}</td>
+                        <td>{{ booking.check_out_date|date:"d.m.Y" }}</td>
+                        <td>{{ booking.total_price }} ₽</td>
+                        <td>
+                            <a href="{% url 'booking:booking_detail' booking.pk %}" class="btn btn-sm btn-info">
+                                <i class="bi bi-eye"></i> Просмотр
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted">У гостя пока нет бронирований</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <a href="{% url 'booking:guests' %}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Назад к списку гостей
+        </a>
+    </div>
+</div>
+{% endblock %}

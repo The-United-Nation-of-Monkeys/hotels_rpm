@@ -1,0 +1,170 @@
+{% extends 'booking/base.html' %}
+
+{% block title %}Создать бронирование - Система бронирования отелей{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-10 mx-auto">
+        <h1>Создать новое бронирование</h1>
+        <hr>
+        
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">Выберите или создайте гостя</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">Выбрать существующего гостя:</label>
+                    <select name="guest_id" class="form-select" id="guest-select">
+                        <option value="">-- Выберите гостя --</option>
+                        {% for guest in guests %}
+                            <option value="{{ guest.pk }}">{{ guest.full_name }} ({{ guest.phone }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <hr>
+                <p class="text-muted">Или создайте нового гостя:</p>
+                <div class="row">
+                    <div class="col-md-4">
+                        <label for="{{ guest_form.last_name.id_for_label }}" class="form-label">Фамилия *</label>
+                        {{ guest_form.last_name }}
+                        {% if guest_form.last_name.errors %}
+                            <div class="text-danger small">{{ guest_form.last_name.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <label for="{{ guest_form.first_name.id_for_label }}" class="form-label">Имя *</label>
+                        {{ guest_form.first_name }}
+                        {% if guest_form.first_name.errors %}
+                            <div class="text-danger small">{{ guest_form.first_name.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <label for="{{ guest_form.middle_name.id_for_label }}" class="form-label">Отчество</label>
+                        {{ guest_form.middle_name }}
+                        {% if guest_form.middle_name.errors %}
+                            <div class="text-danger small">{{ guest_form.middle_name.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-md-4">
+                        <label for="{{ guest_form.passport_number.id_for_label }}" class="form-label">Паспорт *</label>
+                        {{ guest_form.passport_number }}
+                        {% if guest_form.passport_number.errors %}
+                            <div class="text-danger small">{{ guest_form.passport_number.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <label for="{{ guest_form.phone.id_for_label }}" class="form-label">Телефон *</label>
+                        {{ guest_form.phone }}
+                        {% if guest_form.phone.errors %}
+                            <div class="text-danger small">{{ guest_form.phone.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <label for="{{ guest_form.email.id_for_label }}" class="form-label">Email</label>
+                        {{ guest_form.email }}
+                        {% if guest_form.email.errors %}
+                            <div class="text-danger small">{{ guest_form.email.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% if guest_form.non_field_errors %}
+                    <div class="alert alert-danger mt-2">
+                        {{ guest_form.non_field_errors }}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <form method="post">
+            {% csrf_token %}
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Детали бронирования</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="{{ form.room.id_for_label }}" class="form-label">Номер *</label>
+                        {{ form.room }}
+                        {% if form.room.errors %}
+                            <div class="text-danger">{{ form.room.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.check_in_date.id_for_label }}" class="form-label">Дата заезда *</label>
+                            {{ form.check_in_date }}
+                            {% if form.check_in_date.errors %}
+                                <div class="text-danger">{{ form.check_in_date.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.check_out_date.id_for_label }}" class="form-label">Дата выезда *</label>
+                            {{ form.check_out_date }}
+                            {% if form.check_out_date.errors %}
+                                <div class="text-danger">{{ form.check_out_date.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.adults_count.id_for_label }}" class="form-label">Количество взрослых *</label>
+                            {{ form.adults_count }}
+                            {% if form.adults_count.errors %}
+                                <div class="text-danger">{{ form.adults_count.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.children_count.id_for_label }}" class="form-label">Количество детей</label>
+                            {{ form.children_count }}
+                            {% if form.children_count.errors %}
+                                <div class="text-danger">{{ form.children_count.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ form.total_price.id_for_label }}" class="form-label">Стоимость проживания *</label>
+                        {{ form.total_price }}
+                        {% if form.total_price.errors %}
+                            <div class="text-danger">{{ form.total_price.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ form.special_requests.id_for_label }}" class="form-label">Пожелания</label>
+                        {{ form.special_requests }}
+                        {% if form.special_requests.errors %}
+                            <div class="text-danger">{{ form.special_requests.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="d-grid gap-2 mt-4">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="bi bi-check-circle"></i> Создать бронирование
+                </button>
+                <a href="{% url 'booking:bookings' %}" class="btn btn-secondary">
+                    <i class="bi bi-x-circle"></i> Отмена
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Устанавливаем минимальную дату заезда на сегодня
+    const checkInInput = document.getElementById('{{ form.check_in_date.id_for_label }}');
+    const checkOutInput = document.getElementById('{{ form.check_out_date.id_for_label }}');
+    const today = new Date().toISOString().split('T')[0];
+    if (checkInInput) {
+        checkInInput.setAttribute('min', today);
+        checkInInput.addEventListener('change', function() {
+            if (checkOutInput) {
+                checkOutInput.setAttribute('min', this.value);
+            }
+        });
+    }
+</script>
+{% endblock %}

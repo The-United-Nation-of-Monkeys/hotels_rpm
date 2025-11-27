@@ -1,0 +1,110 @@
+{% extends 'booking/base.html' %}
+
+{% block title %}Главная - Система бронирования отелей{% endblock %}
+
+{% block content %}
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="jumbotron bg-primary text-white p-5 rounded">
+            <h1 class="display-4">Добро пожаловать в систему бронирования отелей!</h1>
+            <p class="lead">Удобное и быстрое бронирование номеров в лучших отелях</p>
+            <hr class="my-4" style="border-color: rgba(255,255,255,0.3);">
+            <p>Выберите подходящий номер и забронируйте его прямо сейчас</p>
+            <a class="btn btn-light btn-lg" href="{% url 'booking:rooms' %}" role="button">
+                <i class="bi bi-search"></i> Посмотреть номера
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-5">
+    <div class="col-md-4 mb-4">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <i class="bi bi-door-open display-1 text-primary"></i>
+                <h3 class="card-title mt-3">{{ rooms_count }}</h3>
+                <p class="card-text">Доступных номеров</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <i class="bi bi-people display-1 text-success"></i>
+                <h3 class="card-title mt-3">{{ guests_count }}</h3>
+                <p class="card-text">Зарегистрированных гостей</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <i class="bi bi-calendar-check display-1 text-warning"></i>
+                <h3 class="card-title mt-3">{{ bookings_count }}</h3>
+                <p class="card-text">Активных бронирований</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">Популярные номера</h2>
+        <div class="row">
+            {% for room in available_rooms %}
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ room.name }}</h5>
+                        <p class="text-muted">Номер: {{ room.number }}</p>
+                        <p class="card-text">{{ room.description|truncatewords:15 }}</p>
+                        <p class="badge bg-primary">{{ room.type_name }}</p>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{% url 'booking:room_detail' room.pk %}" class="btn btn-primary">
+                            Подробнее
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12">
+                <p class="text-muted">Номера пока не добавлены</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="card bg-light">
+            <div class="card-body">
+                <h3 class="card-title">Преимущества нашего сервиса</h3>
+                <div class="row mt-4">
+                    <div class="col-md-3 text-center mb-3">
+                        <i class="bi bi-shield-check display-4 text-success"></i>
+                        <h5>Безопасность</h5>
+                        <p>Защита ваших данных</p>
+                    </div>
+                    <div class="col-md-3 text-center mb-3">
+                        <i class="bi bi-clock-history display-4 text-primary"></i>
+                        <h5>Быстро</h5>
+                        <p>Мгновенное бронирование</p>
+                    </div>
+                    <div class="col-md-3 text-center mb-3">
+                        <i class="bi bi-currency-exchange display-4 text-warning"></i>
+                        <h5>Выгодно</h5>
+                        <p>Лучшие цены</p>
+                    </div>
+                    <div class="col-md-3 text-center mb-3">
+                        <i class="bi bi-headset display-4 text-info"></i>
+                        <h5>Поддержка</h5>
+                        <p>Круглосуточная помощь</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

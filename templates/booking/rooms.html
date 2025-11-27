@@ -1,0 +1,78 @@
+{% extends 'booking/base.html' %}
+
+{% block title %}Номера - Система бронирования отелей{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1>Доступные номера</h1>
+        <p class="text-muted">Выберите подходящий номер для бронирования</p>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <form method="get" class="d-flex">
+            <select name="type" class="form-select me-2">
+                <option value="">Все типы</option>
+                {% for type in room_types %}
+                    <option value="{{ type }}" {% if request.GET.type == type %}selected{% endif %}>
+                        {{ type }}
+                    </option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-primary">Фильтровать</button>
+        </form>
+    </div>
+</div>
+
+<div class="row">
+    {% for room in rooms %}
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">{{ room.name }}</h5>
+                <p class="text-muted mb-2">
+                    <i class="bi bi-door-open"></i> Номер: {{ room.number }}
+                </p>
+                <p class="card-text">{{ room.description|truncatewords:20 }}</p>
+                <p>
+                    <span class="badge bg-primary">{{ room.type_name }}</span>
+                </p>
+            </div>
+            <div class="card-footer">
+                <a href="{% url 'booking:room_detail' room.pk %}" class="btn btn-primary">
+                    <i class="bi bi-info-circle"></i> Подробнее
+                </a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> Номера не найдены
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if is_paginated %}
+<nav aria-label="Page navigation">
+    <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Предыдущая</a>
+            </li>
+        {% endif %}
+        <li class="page-item active">
+            <span class="page-link">Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}</span>
+        </li>
+        {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}">Следующая</a>
+            </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}

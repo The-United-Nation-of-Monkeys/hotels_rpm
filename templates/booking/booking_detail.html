@@ -1,0 +1,97 @@
+{% extends 'booking/base.html' %}
+
+{% block title %}Бронирование #{{ booking.booking_id }} - Система бронирования отелей{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <h1>Бронирование #{{ booking.booking_id }}</h1>
+        <hr>
+        <h3>Информация о госте</h3>
+        <table class="table">
+            <tr>
+                <th>Гость:</th>
+                <td>
+                    <a href="{% url 'booking:guest_detail' booking.guest.pk %}">
+                        {{ booking.guest.full_name }}
+                    </a>
+                </td>
+            </tr>
+            <tr>
+                <th>Телефон:</th>
+                <td>{{ booking.guest.phone }}</td>
+            </tr>
+            <tr>
+                <th>Email:</th>
+                <td>{{ booking.guest.email|default:"—" }}</td>
+            </tr>
+        </table>
+        
+        <h3 class="mt-4">Информация о номере</h3>
+        <table class="table">
+            <tr>
+                <th>Номер:</th>
+                <td>
+                    <a href="{% url 'booking:room_detail' booking.room.pk %}">
+                        {{ booking.room.name }} ({{ booking.room.number }})
+                    </a>
+                </td>
+            </tr>
+            <tr>
+                <th>Тип:</th>
+                <td>{{ booking.room.type_name }}</td>
+            </tr>
+        </table>
+        
+        <h3 class="mt-4">Детали бронирования</h3>
+        <table class="table">
+            <tr>
+                <th>Дата заезда:</th>
+                <td>{{ booking.check_in_date|date:"d.m.Y" }}</td>
+            </tr>
+            <tr>
+                <th>Дата выезда:</th>
+                <td>{{ booking.check_out_date|date:"d.m.Y" }}</td>
+            </tr>
+            <tr>
+                <th>Количество взрослых:</th>
+                <td>{{ booking.adults_count }}</td>
+            </tr>
+            <tr>
+                <th>Количество детей:</th>
+                <td>{{ booking.children_count }}</td>
+            </tr>
+            <tr>
+                <th>Стоимость:</th>
+                <td><strong class="text-success">{{ booking.total_price }} ₽</strong></td>
+            </tr>
+            {% if booking.special_requests %}
+            <tr>
+                <th>Пожелания:</th>
+                <td>{{ booking.special_requests|linebreaks }}</td>
+            </tr>
+            {% endif %}
+        </table>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Информация</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>ID бронирования:</strong> {{ booking.booking_id }}</p>
+                <p><strong>Создано:</strong> {{ booking.created_at|date:"d.m.Y H:i" }}</p>
+                <p><strong>Обновлено:</strong> {{ booking.updated_at|date:"d.m.Y H:i" }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <a href="{% url 'booking:bookings' %}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Назад к списку бронирований
+        </a>
+    </div>
+</div>
+{% endblock %}
