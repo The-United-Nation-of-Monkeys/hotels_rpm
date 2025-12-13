@@ -8,83 +8,101 @@
         <h1>Создать новое бронирование</h1>
         <hr>
         
-        <div class="card mb-4">
-            <div class="card-header bg-info text-white">
-                <h5 class="mb-0">Выберите или создайте гостя</h5>
-            </div>
-            <div class="card-body">
-                <div class="mb-3">
-                    <label class="form-label">Выбрать существующего гостя:</label>
-                    <select name="guest_id" class="form-select" id="guest-select">
-                        <option value="">-- Выберите гостя --</option>
-                        {% for guest in guests %}
-                            <option value="{{ guest.pk }}">{{ guest.full_name }} ({{ guest.phone }})</option>
-                        {% endfor %}
-                    </select>
+        <form method="post">
+            {% csrf_token %}
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Выберите или создайте гостя</h5>
                 </div>
-                <hr>
-                <p class="text-muted">Или создайте нового гостя:</p>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Выбрать существующего гостя:</label>
+                        <select name="guest_id" class="form-select" id="guest-select">
+                            <option value="">-- Выберите гостя --</option>
+                            {% for guest in guests %}
+                                <option value="{{ guest.pk }}" {% if request.POST.guest_id == guest.pk|stringformat:"s" or selected_guest_id == guest.pk %}selected{% endif %}>
+                                    {{ guest.full_name }} ({{ guest.phone }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <hr>
+                    <p class="text-muted">Или создайте нового гостя:</p>
+                <div id="new-guest-fields">
                 <div class="row">
                     <div class="col-md-4">
-                        <label for="{{ guest_form.last_name.id_for_label }}" class="form-label">Фамилия *</label>
-                        {{ guest_form.last_name }}
+                        <label for="guest_last_name" class="form-label">Фамилия *</label>
+                        <input type="text" class="form-control" id="guest_last_name" 
+                               name="last_name" value="{% if guest_form.last_name.value %}{{ guest_form.last_name.value }}{% elif request.POST.last_name %}{{ request.POST.last_name }}{% endif %}" required>
                         {% if guest_form.last_name.errors %}
-                            <div class="text-danger small">{{ guest_form.last_name.errors }}</div>
+                            <div class="text-danger small mt-1">{{ guest_form.last_name.errors.0 }}</div>
                         {% endif %}
                     </div>
                     <div class="col-md-4">
-                        <label for="{{ guest_form.first_name.id_for_label }}" class="form-label">Имя *</label>
-                        {{ guest_form.first_name }}
+                        <label for="guest_first_name" class="form-label">Имя *</label>
+                        <input type="text" class="form-control" id="guest_first_name" 
+                               name="first_name" value="{% if guest_form.first_name.value %}{{ guest_form.first_name.value }}{% elif request.POST.first_name %}{{ request.POST.first_name }}{% endif %}" required>
                         {% if guest_form.first_name.errors %}
-                            <div class="text-danger small">{{ guest_form.first_name.errors }}</div>
+                            <div class="text-danger small mt-1">{{ guest_form.first_name.errors.0 }}</div>
                         {% endif %}
                     </div>
                     <div class="col-md-4">
-                        <label for="{{ guest_form.middle_name.id_for_label }}" class="form-label">Отчество</label>
-                        {{ guest_form.middle_name }}
+                        <label for="guest_middle_name" class="form-label">Отчество</label>
+                        <input type="text" class="form-control" id="guest_middle_name" 
+                               name="middle_name" value="{% if guest_form.middle_name.value %}{{ guest_form.middle_name.value }}{% elif request.POST.middle_name %}{{ request.POST.middle_name }}{% endif %}">
                         {% if guest_form.middle_name.errors %}
-                            <div class="text-danger small">{{ guest_form.middle_name.errors }}</div>
+                            <div class="text-danger small mt-1">{{ guest_form.middle_name.errors.0 }}</div>
                         {% endif %}
                     </div>
                 </div>
                 <div class="row mt-2">
                     <div class="col-md-4">
-                        <label for="{{ guest_form.passport_number.id_for_label }}" class="form-label">Паспорт *</label>
-                        {{ guest_form.passport_number }}
+                        <label for="guest_passport_number" class="form-label">Паспорт *</label>
+                        <input type="text" class="form-control" id="guest_passport_number" 
+                               name="passport_number" value="{% if guest_form.passport_number.value %}{{ guest_form.passport_number.value }}{% elif request.POST.passport_number %}{{ request.POST.passport_number }}{% endif %}" required>
                         {% if guest_form.passport_number.errors %}
-                            <div class="text-danger small">{{ guest_form.passport_number.errors }}</div>
+                            <div class="text-danger small mt-1">{{ guest_form.passport_number.errors.0 }}</div>
                         {% endif %}
                     </div>
                     <div class="col-md-4">
-                        <label for="{{ guest_form.phone.id_for_label }}" class="form-label">Телефон *</label>
-                        {{ guest_form.phone }}
+                        <label for="guest_phone" class="form-label">Телефон *</label>
+                        <input type="text" class="form-control" id="guest_phone" 
+                               name="phone" value="{% if guest_form.phone.value %}{{ guest_form.phone.value }}{% elif request.POST.phone %}{{ request.POST.phone }}{% endif %}" required>
                         {% if guest_form.phone.errors %}
-                            <div class="text-danger small">{{ guest_form.phone.errors }}</div>
+                            <div class="text-danger small mt-1">{{ guest_form.phone.errors.0 }}</div>
                         {% endif %}
                     </div>
                     <div class="col-md-4">
-                        <label for="{{ guest_form.email.id_for_label }}" class="form-label">Email</label>
-                        {{ guest_form.email }}
+                        <label for="guest_email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="guest_email" 
+                               name="email" value="{% if guest_form.email.value %}{{ guest_form.email.value }}{% elif request.POST.email %}{{ request.POST.email }}{% endif %}">
                         {% if guest_form.email.errors %}
-                            <div class="text-danger small">{{ guest_form.email.errors }}</div>
+                            <div class="text-danger small mt-1">{{ guest_form.email.errors.0 }}</div>
                         {% endif %}
                     </div>
                 </div>
-                {% if guest_form.non_field_errors %}
-                    <div class="alert alert-danger mt-2">
-                        {{ guest_form.non_field_errors }}
-                    </div>
-                {% endif %}
+                </div>
             </div>
         </div>
         
-        <form method="post">
-            {% csrf_token %}
-            <div class="card">
+        <div class="card">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0">Детали бронирования</h5>
                 </div>
                 <div class="card-body">
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        {% for error in form.non_field_errors %}
+                            <strong><i class="bi bi-exclamation-triangle"></i> {{ error }}</strong>
+                        {% endfor %}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    {% elif booking_conflict %}
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <strong><i class="bi bi-exclamation-triangle"></i> {{ conflict_message }}</strong>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    {% endif %}
                     <div class="mb-3">
                         <label for="{{ form.room.id_for_label }}" class="form-label">Номер *</label>
                         {{ form.room }}
@@ -131,6 +149,10 @@
                             <div class="text-danger">{{ form.special_requests.errors }}</div>
                         {% endif %}
                     </div>
+                    <div class="alert alert-info" id="price-info" style="display: none;">
+                        <strong>Расчетная стоимость: <span id="calculated-total">0</span> ₽</strong>
+                        <br><small id="calculated-nights">0 ночей</small>
+                    </div>
                 </div>
             </div>
             
@@ -147,17 +169,104 @@
 </div>
 
 <script>
-    // Устанавливаем минимальную дату заезда на сегодня
-    const checkInInput = document.getElementById('{{ form.check_in_date.id_for_label }}');
-    const checkOutInput = document.getElementById('{{ form.check_out_date.id_for_label }}');
-    const today = new Date().toISOString().split('T')[0];
-    if (checkInInput) {
-        checkInInput.setAttribute('min', today);
-        checkInInput.addEventListener('change', function() {
-            if (checkOutInput) {
-                checkOutInput.setAttribute('min', this.value);
+    document.addEventListener('DOMContentLoaded', function() {
+        // Скрытие/показ полей создания гостя
+        const guestSelect = document.getElementById('guest-select');
+        const newGuestFields = document.getElementById('new-guest-fields');
+        
+        function toggleGuestFields() {
+            if (guestSelect && newGuestFields) {
+                if (guestSelect.value) {
+                    // Гость выбран - скрываем поля создания
+                    newGuestFields.style.display = 'none';
+                    // Убираем required с полей создания гостя и делаем их необязательными
+                    const guestInputs = newGuestFields.querySelectorAll('input');
+                    guestInputs.forEach(input => {
+                        input.removeAttribute('required');
+                        input.setAttribute('disabled', 'disabled'); // Отключаем поля
+                    });
+                } else {
+                    // Гость не выбран - показываем поля создания
+                    newGuestFields.style.display = 'block';
+                    // Возвращаем required и включаем поля
+                    const guestInputs = newGuestFields.querySelectorAll('input');
+                    guestInputs.forEach(input => {
+                        input.removeAttribute('disabled');
+                        if (input.id.includes('last_name') || input.id.includes('first_name') || 
+                            input.id.includes('passport_number') || input.id.includes('phone')) {
+                            input.setAttribute('required', 'required');
+                        }
+                    });
+                }
             }
-        });
+        }
+        
+        if (guestSelect) {
+            guestSelect.addEventListener('change', toggleGuestFields);
+            // Вызываем при загрузке страницы
+            toggleGuestFields();
+            
+            // Восстанавливаем выбранного гостя после ошибки
+            {% if selected_guest_id %}
+            guestSelect.value = '{{ selected_guest_id }}';
+            toggleGuestFields();
+            {% endif %}
+        }
+    
+        // Устанавливаем минимальную дату заезда на сегодня
+        const checkInInput = document.getElementById('{{ form.check_in_date.id_for_label }}');
+        const checkOutInput = document.getElementById('{{ form.check_out_date.id_for_label }}');
+        const roomSelect = document.getElementById('{{ form.room.id_for_label }}');
+        const priceInfo = document.getElementById('price-info');
+        const calculatedTotal = document.getElementById('calculated-total');
+        const calculatedNights = document.getElementById('calculated-nights');
+        const today = new Date().toISOString().split('T')[0];
+        
+        // Данные о ценах номеров
+        const roomPrices = {{ room_prices_json|safe }};
+        
+        function calculateBookingPrice() {
+        const roomId = roomSelect.value;
+        const checkIn = checkInInput.value;
+        const checkOut = checkOutInput.value;
+        
+        if (roomId && checkIn && checkOut) {
+            const checkInDate = new Date(checkIn);
+            const checkOutDate = new Date(checkOut);
+            
+            if (checkOutDate > checkInDate) {
+                const nights = Math.ceil((checkOutDate - checkInDate) / (1000 * 60 * 60 * 24));
+                const pricePerNight = roomPrices[roomId];
+                const total = nights * pricePerNight;
+                
+                calculatedTotal.textContent = total.toLocaleString('ru-RU');
+                calculatedNights.textContent = nights + ' ' + (nights === 1 ? 'ночь' : nights < 5 ? 'ночи' : 'ночей');
+                priceInfo.style.display = 'block';
+            } else {
+                priceInfo.style.display = 'none';
+            }
+        } else {
+            priceInfo.style.display = 'none';
+        }
     }
+    
+        if (checkInInput) {
+            checkInInput.setAttribute('min', today);
+            checkInInput.addEventListener('change', function() {
+                if (checkOutInput) {
+                    checkOutInput.setAttribute('min', this.value);
+                }
+                calculateBookingPrice();
+            });
+        }
+        
+        if (checkOutInput) {
+            checkOutInput.addEventListener('change', calculateBookingPrice);
+        }
+        
+        if (roomSelect) {
+            roomSelect.addEventListener('change', calculateBookingPrice);
+        }
+    });
 </script>
 {% endblock %}

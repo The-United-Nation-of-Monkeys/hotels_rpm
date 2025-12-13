@@ -20,9 +20,33 @@
                 <h5 class="mb-0">Информация о номере</h5>
             </div>
             <div class="card-body">
+                <p><strong>Отель:</strong> {{ room.hotel.name }}</p>
                 <p><strong>Номер:</strong> {{ room.number }}</p>
                 <p><strong>Тип:</strong> {{ room.type_name }}</p>
+                <p><strong>Цена за ночь:</strong> <span class="text-success fs-5">{{ room.price_per_night }} ₽</span></p>
                 <p><strong>Создан:</strong> {{ room.created_at|date:"d.m.Y" }}</p>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">Проверка доступности и расчет стоимости</h5>
+            </div>
+            <div class="card-body">
+                <div id="availability-checker">
+                    <div class="mb-2">
+                        <label for="calc-check-in" class="form-label small">Дата заезда</label>
+                        <input type="date" class="form-control form-control-sm" id="calc-check-in" required>
+                    </div>
+                    <div class="mb-2">
+                        <label for="calc-check-out" class="form-label small">Дата выезда</label>
+                        <input type="date" class="form-control form-control-sm" id="calc-check-out" required>
+                    </div>
+                    <button type="button" class="btn btn-primary btn-sm w-100" id="check-availability-btn">
+                        <i class="bi bi-search"></i> Проверить доступность и рассчитать стоимость
+                    </button>
+                    <div id="availability-result" class="mt-3"></div>
+                </div>
             </div>
         </div>
         
@@ -47,9 +71,19 @@
         
         <div class="card mt-3">
             <div class="card-body">
-                <a href="{% url 'booking:booking_create' %}?room={{ room.pk }}" class="btn btn-primary w-100">
-                    <i class="bi bi-calendar-plus"></i> Забронировать номер
-                </a>
+                {% if user.is_authenticated %}
+                    {% if user.profile.is_regular_user %}
+                        <a href="{% url 'booking:booking_create' %}?room={{ room.pk }}" class="btn btn-primary w-100">
+                            <i class="bi bi-calendar-plus"></i> Забронировать номер
+                        </a>
+                    {% else %}
+                        <p class="text-muted small">Организации не могут бронировать номера</p>
+                    {% endif %}
+                {% else %}
+                    <a href="{% url 'booking:login' %}" class="btn btn-primary w-100">
+                        <i class="bi bi-box-arrow-in-right"></i> Войти для бронирования
+                    </a>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -62,4 +96,119 @@
         </a>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const pricePerNight = {{ room.price_per_night }};
+        const roomId = {{ room.pk }};
+        const checkInInput = document.getElementById('calc-check-in');
+        const checkOutInput = document.getElementById('calc-check-out');
+        const checkBtn = document.getElementById('check-availability-btn');
+        const resultDiv = document.getElementById('availability-result');
+        
+        if (!checkInInput || !checkOutInput || !checkBtn || !resultDiv) {
+            console.error('Не найдены необходимые элементы на странице', {
+                checkInInput: !!checkInInput,
+                checkOutInput: !!checkOutInput,
+                checkBtn: !!checkBtn,
+                resultDiv: !!resultDiv
+            });
+            return;
+        }
+        
+        // Устанавливаем минимальную дату на сегодня
+        const today = new Date().toISOString().split('T')[0];
+        checkInInput.setAttribute('min', today);
+        
+        checkInInput.addEventListener('change', function() {
+            if (checkOutInput) {
+                checkOutInput.setAttribute('min', this.value);
+            }
+        });
+        
+        checkBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            console.log('Кнопка нажата');
+            const checkIn = checkInInput.value;
+            const checkOut = checkOutInput.value;
+            
+            if (!checkIn || !checkOut) {
+                resultDiv.innerHTML = '<div class="alert alert-warning">Пожалуйста, выберите даты заезда и выезда</div>';
+                return;
+            }
+            
+            const checkInDate = new Date(checkIn);
+            const checkOutDate = new Date(checkOut);
+            
+            if (checkOutDate <= checkInDate) {
+                resultDiv.innerHTML = '<div class="alert alert-warning">Дата выезда должна быть позже даты заезда</div>';
+                return;
+            }
+            
+            // Показываем загрузку
+            checkBtn.disabled = true;
+            checkBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Проверка...';
+            resultDiv.innerHTML = '';
+            
+            // Проверяем доступность через AJAX
+            const url = `{% url 'booking:check_room_availability' room.pk %}?check_in=${checkIn}&check_out=${checkOut}`;
+            
+            console.log('Отправка запроса:', url);
+            
+            fetch(url, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                }
+            })
+                .then(response => {
+                    console.log('Получен ответ:', response.status);
+                    if (!response.ok) {
+                        return response.json().then(data => {
+                            console.error('Ошибка сервера:', data);
+                            throw new Error(data.error || 'Ошибка сервера');
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Данные получены:', data);
+                    if (data.available) {
+                        resultDiv.innerHTML = `
+                            <div class="alert alert-success">
+                                <h6><i class="bi bi-check-circle"></i> Номер доступен!</h6>
+                                <p class="mb-1"><strong>Итоговая стоимость:</strong> ${Math.round(data.total_price).toLocaleString('ru-RU')} ₽</p>
+                                <p class="mb-0"><small>Количество ночей: ${data.nights} ${data.nights === 1 ? 'ночь' : data.nights < 5 ? 'ночи' : 'ночей'}</small></p>
+                            </div>
+                        `;
+                    } else {
+                        // Формируем список дат занятости
+                        let datesList = '';
+                        if (data.booking_dates && data.booking_dates.length > 0) {
+                            const datesStrings = data.booking_dates.map(booking => 
+                                `${booking.check_in} - ${booking.check_out}`
+                            );
+                            datesList = datesStrings.join(', ');
+                        }
+                        
+                        resultDiv.innerHTML = `
+                            <div class="alert alert-danger">
+                                <h6><i class="bi bi-x-circle"></i> Номер не доступен</h6>
+                                <p class="mb-0">Номер забронирован на следующие даты: ${datesList || 'на выбранные даты'}</p>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Ошибка:', error);
+                    resultDiv.innerHTML = `<div class="alert alert-danger"><strong>Ошибка:</strong> ${error.message}</div>`;
+                })
+                .finally(() => {
+                    checkBtn.disabled = false;
+                    checkBtn.innerHTML = '<i class="bi bi-search"></i> Проверить доступность и рассчитать стоимость';
+                });
+        });
+    </script>
 {% endblock %}

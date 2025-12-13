@@ -1,0 +1,50 @@
+{% extends 'booking/base.html' %}
+
+{% block title %}Регистрация - Система бронирования отелей{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <h1 class="text-center mb-5">Выберите тип регистрации</h1>
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="card h-100 text-center">
+                    <div class="card-body">
+                        <i class="bi bi-person display-1 text-primary"></i>
+                        <h3 class="card-title mt-3">Пользователь</h3>
+                        <p class="card-text">Регистрация для бронирования номеров</p>
+                        <ul class="list-unstyled text-start">
+                            <li><i class="bi bi-check-circle text-success"></i> Просмотр номеров</li>
+                            <li><i class="bi bi-check-circle text-success"></i> Бронирование номеров</li>
+                            <li><i class="bi bi-check-circle text-success"></i> Управление бронированиями</li>
+                        </ul>
+                        <a href="{% url 'booking:register_user' %}" class="btn btn-primary btn-lg mt-3">
+                            Зарегистрироваться как пользователь
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="card h-100 text-center">
+                    <div class="card-body">
+                        <i class="bi bi-building display-1 text-success"></i>
+                        <h3 class="card-title mt-3">Организация</h3>
+                        <p class="card-text">Регистрация для управления отелями</p>
+                        <ul class="list-unstyled text-start">
+                            <li><i class="bi bi-check-circle text-success"></i> Создание отелей</li>
+                            <li><i class="bi bi-check-circle text-success"></i> Управление номерами</li>
+                            <li><i class="bi bi-check-circle text-success"></i> Просмотр бронирований</li>
+                        </ul>
+                        <a href="{% url 'booking:register_organization' %}" class="btn btn-success btn-lg mt-3">
+                            Зарегистрироваться как организация
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="text-center mt-4">
+            <p>Уже есть аккаунт? <a href="{% url 'booking:login' %}">Войти</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}

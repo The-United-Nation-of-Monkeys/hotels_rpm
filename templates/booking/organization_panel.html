@@ -1,0 +1,164 @@
+{% extends 'booking/base.html' %}
+
+{% block title %}Панель организации - Система бронирования отелей{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1>Панель организации</h1>
+        <p class="text-muted">Управление отелями и номерами</p>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="bi bi-building display-4 text-primary"></i>
+                <h3>{{ hotels.count }}</h3>
+                <p>Отелей</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="bi bi-door-open display-4 text-success"></i>
+                <h3>{{ rooms.count }}</h3>
+                <p>Номеров</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="bi bi-calendar-check display-4 text-warning"></i>
+                <h3>{{ bookings.count }}</h3>
+                <p>Бронирований</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Мои отели</h5>
+                <a href="{% url 'booking:hotel_create' %}" class="btn btn-sm btn-primary">
+                    <i class="bi bi-plus-circle"></i> Добавить отель
+                </a>
+            </div>
+            <div class="card-body">
+                {% if hotels %}
+                <div class="list-group">
+                    {% for hotel in hotels %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">{{ hotel.name }}</h6>
+                                <p class="mb-1 text-muted small">{{ hotel.address|truncatewords:10 }}</p>
+                            </div>
+                            <div>
+                                <a href="{% url 'booking:hotel_edit' hotel.pk %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-pencil"></i> Редактировать
+                                </a>
+                                <a href="{% url 'booking:room_create' %}?hotel={{ hotel.pk }}" class="btn btn-sm btn-outline-success">
+                                    <i class="bi bi-plus"></i> Добавить номер
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted">У вас пока нет отелей. <a href="{% url 'booking:hotel_create' %}">Создать первый отель</a></p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Последние бронирования</h5>
+            </div>
+            <div class="card-body">
+                {% if bookings %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Гость</th>
+                                <th>Номер</th>
+                                <th>Даты</th>
+                                <th>Стоимость</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for booking in bookings %}
+                            <tr>
+                                <td>{{ booking.guest.full_name }}</td>
+                                <td>{{ booking.room.number }}</td>
+                                <td>{{ booking.check_in_date|date:"d.m" }} - {{ booking.check_out_date|date:"d.m" }}</td>
+                                <td>{{ booking.total_price }} ₽</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <a href="{% url 'booking:bookings' %}" class="btn btn-sm btn-outline-primary">Все бронирования</a>
+                {% else %}
+                <p class="text-muted">Пока нет бронирований</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Все номера</h5>
+            </div>
+            <div class="card-body">
+                {% if rooms %}
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Отель</th>
+                                <th>Номер</th>
+                                <th>Название</th>
+                                <th>Тип</th>
+                                <th>Цена за ночь</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for room in rooms %}
+                            <tr>
+                                <td>{{ room.hotel.name }}</td>
+                                <td>{{ room.number }}</td>
+                                <td>{{ room.name }}</td>
+                                <td>{{ room.type_name }}</td>
+                                <td><strong>{{ room.price_per_night }} ₽</strong></td>
+                                <td>
+                                    <a href="{% url 'booking:room_edit' room.pk %}" class="btn btn-sm btn-primary">
+                                        <i class="bi bi-pencil"></i> Редактировать
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted">У вас пока нет номеров</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

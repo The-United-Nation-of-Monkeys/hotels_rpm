@@ -49,19 +49,32 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'booking:rooms' %}">Номера</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'booking:guests' %}">Гости</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'booking:bookings' %}">Бронирования</a>
-                    </li>
+                    {% if user.is_authenticated %}
+                        {% if user.profile.is_organization %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'booking:organization_panel' %}">Панель организации</a>
+                            </li>
+                        {% else %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'booking:bookings' %}">Мои бронирования</a>
+                            </li>
+                        {% endif %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'booking:profile' %}">Личный кабинет</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'booking:logout' %}">Выход</a>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'booking:login' %}">Вход</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'booking:register_type' %}">Регистрация</a>
+                        </li>
+                    {% endif %}
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'booking:contact' %}">Контакты</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/admin/" target="_blank">
-                            <i class="bi bi-gear"></i> Админ
-                        </a>
                     </li>
                 </ul>
             </div>
@@ -83,7 +96,7 @@
 
     <footer class="py-4 mt-5">
         <div class="container text-center">
-            <p class="mb-0">&copy; 2024 Система бронирования отелей. Все права защищены.</p>
+            <p class="mb-0">&copy; 2025 Система бронирования отелей. Все права защищены.</p>
         </div>
     </footer>
 

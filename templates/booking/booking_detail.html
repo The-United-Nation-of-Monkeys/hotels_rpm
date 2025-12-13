@@ -30,6 +30,10 @@
         <h3 class="mt-4">Информация о номере</h3>
         <table class="table">
             <tr>
+                <th>Отель:</th>
+                <td>{{ booking.room.hotel.name }}</td>
+            </tr>
+            <tr>
                 <th>Номер:</th>
                 <td>
                     <a href="{% url 'booking:room_detail' booking.room.pk %}">
@@ -40,6 +44,10 @@
             <tr>
                 <th>Тип:</th>
                 <td>{{ booking.room.type_name }}</td>
+            </tr>
+            <tr>
+                <th>Цена за ночь:</th>
+                <td>{{ booking.room.price_per_night }} ₽</td>
             </tr>
         </table>
         
@@ -60,6 +68,10 @@
             <tr>
                 <th>Количество детей:</th>
                 <td>{{ booking.children_count }}</td>
+            </tr>
+            <tr>
+                <th>Стоимость:</th>
+                <td><strong class="text-success">{{ booking.total_price }} ₽</strong></td>
             </tr>
             {% if booking.special_requests %}
             <tr>
