@@ -5,14 +5,19 @@
 {% block content %}
 <div class="row">
     <div class="col-md-10 mx-auto">
-        <h1>Создать новое бронирование</h1>
-        <hr>
+        <div class="text-center mb-5">
+            <h1 class="display-4 fw-bold mb-3">
+                <span style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                    Создать новое бронирование
+                </span>
+            </h1>
+        </div>
         
         <form method="post">
             {% csrf_token %}
-            <div class="card mb-4">
-                <div class="card-header bg-info text-white">
-                    <h5 class="mb-0">Выберите или создайте гостя</h5>
+            <div class="card mb-4 border-0 shadow-lg">
+                <div class="card-header" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                    <h5 class="mb-0 text-white"><i class="bi bi-person"></i> Выберите или создайте гостя</h5>
                 </div>
                 <div class="card-body">
                     <div class="mb-3">
@@ -85,9 +90,9 @@
             </div>
         </div>
         
-        <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">Детали бронирования</h5>
+        <div class="card border-0 shadow-lg">
+                <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <h5 class="mb-0 text-white"><i class="bi bi-calendar-check"></i> Детали бронирования</h5>
                 </div>
                 <div class="card-body">
                     {% if form.non_field_errors %}

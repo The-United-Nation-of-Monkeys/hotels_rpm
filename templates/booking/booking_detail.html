@@ -3,12 +3,23 @@
 {% block title %}Бронирование #{{ booking.booking_id }} - Система бронирования отелей{% endblock %}
 
 {% block content %}
-<div class="row">
+<div class="row fade-in-up">
     <div class="col-md-8">
-        <h1>Бронирование #{{ booking.booking_id }}</h1>
-        <hr>
-        <h3>Информация о госте</h3>
-        <table class="table">
+        <div class="mb-4">
+            <h1 class="fw-bold mb-2">
+                <i class="bi bi-calendar-check text-primary me-2"></i>Бронирование #{{ booking.booking_id }}
+            </h1>
+            <p class="text-muted">Детальная информация о бронировании</p>
+        </div>
+        
+        <div class="card shadow-lg border-0 mb-4">
+            <div class="card-header">
+                <h5 class="mb-0 fw-bold">
+                    <i class="bi bi-person me-2"></i>Информация о госте
+                </h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless mb-0">
             <tr>
                 <th>Гость:</th>
                 <td>
@@ -25,10 +36,18 @@
                 <th>Email:</th>
                 <td>{{ booking.guest.email|default:"—" }}</td>
             </tr>
-        </table>
+                </table>
+            </div>
+        </div>
         
-        <h3 class="mt-4">Информация о номере</h3>
-        <table class="table">
+        <div class="card shadow-lg border-0 mb-4">
+            <div class="card-header">
+                <h5 class="mb-0 fw-bold">
+                    <i class="bi bi-door-open me-2"></i>Информация о номере
+                </h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless mb-0">
             <tr>
                 <th>Отель:</th>
                 <td>{{ booking.room.hotel.name }}</td>
@@ -49,10 +68,18 @@
                 <th>Цена за ночь:</th>
                 <td>{{ booking.room.price_per_night }} ₽</td>
             </tr>
-        </table>
+                </table>
+            </div>
+        </div>
         
-        <h3 class="mt-4">Детали бронирования</h3>
-        <table class="table">
+        <div class="card shadow-lg border-0 mb-4">
+            <div class="card-header">
+                <h5 class="mb-0 fw-bold">
+                    <i class="bi bi-info-circle me-2"></i>Детали бронирования
+                </h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless mb-0">
             <tr>
                 <th>Дата заезда:</th>
                 <td>{{ booking.check_in_date|date:"d.m.Y" }}</td>
@@ -79,17 +106,30 @@
                 <td>{{ booking.special_requests|linebreaks }}</td>
             </tr>
             {% endif %}
-        </table>
+                </table>
+            </div>
+        </div>
     </div>
     <div class="col-md-4">
-        <div class="card">
-            <div class="card-header bg-primary text-white">
-                <h5 class="mb-0">Информация</h5>
+        <div class="card shadow-lg border-0 mb-4">
+            <div class="card-header">
+                <h5 class="mb-0 fw-bold">
+                    <i class="bi bi-info-circle me-2"></i>Дополнительная информация
+                </h5>
             </div>
             <div class="card-body">
-                <p><strong>ID бронирования:</strong> {{ booking.booking_id }}</p>
-                <p><strong>Создано:</strong> {{ booking.created_at|date:"d.m.Y H:i" }}</p>
-                <p><strong>Обновлено:</strong> {{ booking.updated_at|date:"d.m.Y H:i" }}</p>
+                <div class="mb-3 pb-3 border-bottom">
+                    <p class="text-muted mb-1 small">ID бронирования</p>
+                    <p class="mb-0 fw-bold">#{{ booking.booking_id }}</p>
+                </div>
+                <div class="mb-3 pb-3 border-bottom">
+                    <p class="text-muted mb-1 small">Создано</p>
+                    <p class="mb-0">{{ booking.created_at|date:"d.m.Y H:i" }}</p>
+                </div>
+                <div class="mb-0">
+                    <p class="text-muted mb-1 small">Обновлено</p>
+                    <p class="mb-0">{{ booking.updated_at|date:"d.m.Y H:i" }}</p>
+                </div>
             </div>
         </div>
     </div>
@@ -98,7 +138,7 @@
 <div class="row mt-4">
     <div class="col-12">
         <a href="{% url 'booking:bookings' %}" class="btn btn-secondary">
-            <i class="bi bi-arrow-left"></i> Назад к списку бронирований
+            <i class="bi bi-arrow-left me-2"></i>Назад к списку бронирований
         </a>
     </div>
 </div>

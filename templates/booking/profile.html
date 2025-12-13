@@ -5,13 +5,18 @@
 {% block content %}
 <div class="row">
     <div class="col-md-8 mx-auto">
-        <h1>Личный кабинет</h1>
-        <hr>
+        <div class="text-center mb-5">
+            <h1 class="display-4 fw-bold mb-3">
+                <span style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                    Личный кабинет
+                </span>
+            </h1>
+        </div>
         <form method="post">
             {% csrf_token %}
-            <div class="card mb-4">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">Личная информация</h5>
+            <div class="card mb-4 border-0 shadow-lg">
+                <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <h5 class="mb-0 text-white"><i class="bi bi-person-circle"></i> Личная информация</h5>
                 </div>
                 <div class="card-body">
                     <div class="row">
@@ -50,9 +55,9 @@
         </form>
         
         {% if user.profile.is_regular_user %}
-        <div class="card mt-4">
-            <div class="card-header">
-                <h5 class="mb-0">Мои последние бронирования</h5>
+        <div class="card mt-4 border-0 shadow-lg">
+            <div class="card-header" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                <h5 class="mb-0 text-white"><i class="bi bi-calendar-check"></i> Мои последние бронирования</h5>
             </div>
             <div class="card-body">
                 {% if user_bookings %}

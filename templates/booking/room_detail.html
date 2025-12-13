@@ -3,36 +3,57 @@
 {% block title %}{{ room.name }} - Система бронирования отелей{% endblock %}
 
 {% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <a href="{% url 'booking:rooms' %}" class="btn btn-secondary mb-3">
+            <i class="bi bi-arrow-left"></i> Назад к списку номеров
+        </a>
+    </div>
+</div>
+
 <div class="row">
     <div class="col-md-8">
-        <h1>{{ room.name }}</h1>
-        <p class="text-muted">
-            <i class="bi bi-door-open"></i> Номер: {{ room.number }} | 
-            <span class="badge bg-primary">{{ room.type_name }}</span>
-        </p>
-        <hr>
-        <h3>Описание</h3>
-        <p>{{ room.description|linebreaks }}</p>
+        <div class="card border-0 shadow-lg mb-4">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <h1 class="display-5 fw-bold mb-0">{{ room.name }}</h1>
+                    <span class="badge" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); font-size: 1rem; padding: 0.5rem 1rem;">{{ room.type_name }}</span>
+                </div>
+                <p class="text-muted mb-4">
+                    <i class="bi bi-door-open text-primary"></i> Номер: <strong>{{ room.number }}</strong>
+                </p>
+                <hr>
+                <h3 class="fw-bold mb-3">
+                    <span style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                        Описание
+                    </span>
+                </h3>
+                <p class="lead">{{ room.description|linebreaks }}</p>
+            </div>
+        </div>
     </div>
     <div class="col-md-4">
-        <div class="card">
-            <div class="card-header bg-primary text-white">
-                <h5 class="mb-0">Информация о номере</h5>
+        <div class="card border-0 shadow-lg mb-3">
+            <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <h5 class="mb-0 text-white"><i class="bi bi-info-circle"></i> Информация о номере</h5>
             </div>
-            <div class="card-body">
-                <p><strong>Отель:</strong> {{ room.hotel.name }}</p>
-                <p><strong>Номер:</strong> {{ room.number }}</p>
-                <p><strong>Тип:</strong> {{ room.type_name }}</p>
-                <p><strong>Цена за ночь:</strong> <span class="text-success fs-5">{{ room.price_per_night }} ₽</span></p>
-                <p><strong>Создан:</strong> {{ room.created_at|date:"d.m.Y" }}</p>
+            <div class="card-body p-4">
+                <p class="mb-3"><i class="bi bi-building text-primary"></i> <strong>Отель:</strong> {{ room.hotel.name }}</p>
+                <p class="mb-3"><i class="bi bi-door-open text-primary"></i> <strong>Номер:</strong> {{ room.number }}</p>
+                <p class="mb-3"><i class="bi bi-tag text-primary"></i> <strong>Тип:</strong> {{ room.type_name }}</p>
+                <div class="border-top pt-3 mt-3">
+                    <p class="mb-0"><strong>Цена за ночь:</strong></p>
+                    <h3 class="text-success fw-bold mb-0">{{ room.price_per_night }} ₽</h3>
+                </div>
+                <p class="text-muted small mt-3 mb-0"><i class="bi bi-calendar"></i> Создан: {{ room.created_at|date:"d.m.Y" }}</p>
             </div>
         </div>
         
-        <div class="card mt-3">
-            <div class="card-header bg-info text-white">
-                <h5 class="mb-0">Проверка доступности и расчет стоимости</h5>
+        <div class="card border-0 shadow-lg mb-3">
+            <div class="card-header" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                <h5 class="mb-0 text-white"><i class="bi bi-calculator"></i> Проверка доступности и расчет стоимости</h5>
             </div>
-            <div class="card-body">
+            <div class="card-body p-4">
                 <div id="availability-checker">
                     <div class="mb-2">
                         <label for="calc-check-in" class="form-label small">Дата заезда</label>
@@ -69,31 +90,25 @@
         </div>
         {% endif %}
         
-        <div class="card mt-3">
-            <div class="card-body">
+        <div class="card border-0 shadow-lg">
+            <div class="card-body p-4 text-center">
                 {% if user.is_authenticated %}
                     {% if user.profile.is_regular_user %}
-                        <a href="{% url 'booking:booking_create' %}?room={{ room.pk }}" class="btn btn-primary w-100">
+                        <a href="{% url 'booking:booking_create' %}?room={{ room.pk }}" class="btn btn-primary btn-lg w-100">
                             <i class="bi bi-calendar-plus"></i> Забронировать номер
                         </a>
                     {% else %}
-                        <p class="text-muted small">Организации не могут бронировать номера</p>
+                        <div class="alert alert-info mb-0">
+                            <i class="bi bi-info-circle"></i> Организации не могут бронировать номера
+                        </div>
                     {% endif %}
                 {% else %}
-                    <a href="{% url 'booking:login' %}" class="btn btn-primary w-100">
+                    <a href="{% url 'booking:login' %}" class="btn btn-primary btn-lg w-100">
                         <i class="bi bi-box-arrow-in-right"></i> Войти для бронирования
                     </a>
                 {% endif %}
             </div>
         </div>
-    </div>
-</div>
-
-<div class="row mt-4">
-    <div class="col-12">
-        <a href="{% url 'booking:rooms' %}" class="btn btn-secondary">
-            <i class="bi bi-arrow-left"></i> Назад к списку номеров
-        </a>
     </div>
 </div>
 

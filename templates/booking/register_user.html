@@ -3,11 +3,16 @@
 {% block title %}Регистрация пользователя - Система бронирования отелей{% endblock %}
 
 {% block content %}
-<div class="row">
+<div class="row fade-in-up">
     <div class="col-md-6 mx-auto">
-        <h1>Регистрация пользователя</h1>
-        <hr>
-        <form method="post">
+        <div class="card shadow-lg border-0">
+            <div class="card-header">
+                <h3 class="mb-0 fw-bold text-center">
+                    <i class="bi bi-person-plus me-2"></i>Регистрация пользователя
+                </h3>
+            </div>
+            <div class="card-body p-4">
+                <form method="post">
             {% csrf_token %}
             <div class="mb-3">
                 <label for="{{ form.username.id_for_label }}" class="form-label">Имя пользователя *</label>
@@ -60,11 +65,17 @@
                     <div class="text-danger">{{ form.password2.errors }}</div>
                 {% endif %}
             </div>
-            <div class="d-grid gap-2">
-                <button type="submit" class="btn btn-primary">Зарегистрироваться</button>
-                <a href="{% url 'booking:register_type' %}" class="btn btn-secondary">Назад</a>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-check-circle me-2"></i>Зарегистрироваться
+                        </button>
+                        <a href="{% url 'booking:register_type' %}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>Назад
+                        </a>
+                    </div>
+                </form>
             </div>
-        </form>
+        </div>
     </div>
 </div>
 {% endblock %}

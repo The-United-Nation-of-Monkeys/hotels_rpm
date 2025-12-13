@@ -3,35 +3,47 @@
 {% block title %}Контакты - Система бронирования отелей{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-md-8 mx-auto">
-        <h1>Контакты</h1>
-        <hr>
+<div class="row fade-in-up">
+    <div class="col-md-10 mx-auto">
+        <div class="text-center mb-5">
+            <h1 class="display-4 fw-bold mb-3">
+                <span class="text-gradient">Контакты</span>
+            </h1>
+            <p class="lead text-muted">Свяжитесь с нами любым удобным способом</p>
+        </div>
         
-        <div class="card mb-4">
-            <div class="card-body">
-                <h3 class="card-title">Свяжитесь с нами</h3>
-                <p class="card-text">Мы всегда рады помочь вам с бронированием номеров и ответить на ваши вопросы.</p>
+        <div class="card shadow-lg border-0 mb-4">
+            <div class="card-body p-5 text-center">
+                <h3 class="card-title fw-bold mb-3">Свяжитесь с нами</h3>
+                <p class="card-text fs-5 text-muted">Мы всегда рады помочь вам с бронированием номеров и ответить на ваши вопросы.</p>
             </div>
         </div>
         
         <div class="row">
             <div class="col-md-6 mb-4">
-                <div class="card h-100">
-                    <div class="card-body text-center">
-                        <i class="bi bi-telephone display-1 text-primary"></i>
-                        <h4 class="mt-3">Телефон</h4>
-                        <p class="text-muted">+7 (495) 123-45-67</p>
+                <div class="card h-100 shadow-md border-0">
+                    <div class="card-body text-center p-4">
+                        <div class="mb-3">
+                            <div class="d-inline-block p-3 rounded-circle" style="background: var(--gradient-primary);">
+                                <i class="bi bi-telephone display-4 text-white"></i>
+                            </div>
+                        </div>
+                        <h4 class="fw-bold mb-3">Телефон</h4>
+                        <p class="text-muted mb-1">+7 (495) 123-45-67</p>
                         <p class="text-muted">+7 (800) 123-45-67</p>
                     </div>
                 </div>
             </div>
             <div class="col-md-6 mb-4">
-                <div class="card h-100">
-                    <div class="card-body text-center">
-                        <i class="bi bi-envelope display-1 text-success"></i>
-                        <h4 class="mt-3">Email</h4>
-                        <p class="text-muted">info@hotel-booking.ru</p>
+                <div class="card h-100 shadow-md border-0">
+                    <div class="card-body text-center p-4">
+                        <div class="mb-3">
+                            <div class="d-inline-block p-3 rounded-circle" style="background: var(--gradient-success);">
+                                <i class="bi bi-envelope display-4 text-white"></i>
+                            </div>
+                        </div>
+                        <h4 class="fw-bold mb-3">Email</h4>
+                        <p class="text-muted mb-1">info@hotel-booking.ru</p>
                         <p class="text-muted">booking@hotel-booking.ru</p>
                     </div>
                 </div>
@@ -40,31 +52,41 @@
         
         <div class="row">
             <div class="col-md-6 mb-4">
-                <div class="card h-100">
-                    <div class="card-body text-center">
-                        <i class="bi bi-geo-alt display-1 text-warning"></i>
-                        <h4 class="mt-3">Адрес</h4>
-                        <p class="text-muted">г. Москва, ул. Примерная, д. 1</p>
+                <div class="card h-100 shadow-md border-0">
+                    <div class="card-body text-center p-4">
+                        <div class="mb-3">
+                            <div class="d-inline-block p-3 rounded-circle" style="background: var(--gradient-warning);">
+                                <i class="bi bi-geo-alt display-4 text-white"></i>
+                            </div>
+                        </div>
+                        <h4 class="fw-bold mb-3">Адрес</h4>
+                        <p class="text-muted mb-1">г. Москва, ул. Примерная, д. 1</p>
                         <p class="text-muted">101000</p>
                     </div>
                 </div>
             </div>
             <div class="col-md-6 mb-4">
-                <div class="card h-100">
-                    <div class="card-body text-center">
-                        <i class="bi bi-clock display-1 text-info"></i>
-                        <h4 class="mt-3">Режим работы</h4>
-                        <p class="text-muted">Пн-Пт: 9:00 - 21:00</p>
+                <div class="card h-100 shadow-md border-0">
+                    <div class="card-body text-center p-4">
+                        <div class="mb-3">
+                            <div class="d-inline-block p-3 rounded-circle" style="background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);">
+                                <i class="bi bi-clock display-4 text-white"></i>
+                            </div>
+                        </div>
+                        <h4 class="fw-bold mb-3">Режим работы</h4>
+                        <p class="text-muted mb-1">Пн-Пт: 9:00 - 21:00</p>
                         <p class="text-muted">Сб-Вс: 10:00 - 20:00</p>
                     </div>
                 </div>
             </div>
         </div>
         
-        <div class="card bg-light">
-            <div class="card-body">
-                <h5>Обратная связь</h5>
-                <p>Если у вас есть вопросы или предложения, пожалуйста, свяжитесь с нами любым удобным способом. Наша служба поддержки работает круглосуточно и готова помочь вам в любое время.</p>
+        <div class="card shadow-lg border-0">
+            <div class="card-body p-5">
+                <h5 class="fw-bold mb-3">
+                    <i class="bi bi-chat-dots text-primary me-2"></i>Обратная связь
+                </h5>
+                <p class="text-muted fs-5">Если у вас есть вопросы или предложения, пожалуйста, свяжитесь с нами любым удобным способом. Наша служба поддержки работает круглосуточно и готова помочь вам в любое время.</p>
             </div>
         </div>
     </div>

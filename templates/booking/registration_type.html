@@ -3,47 +3,60 @@
 {% block title %}Регистрация - Система бронирования отелей{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-md-8 mx-auto">
-        <h1 class="text-center mb-5">Выберите тип регистрации</h1>
+<div class="row fade-in-up">
+    <div class="col-md-10 mx-auto">
+        <div class="text-center mb-5">
+            <h1 class="display-4 fw-bold mb-3">
+                <span class="text-gradient">Выберите тип регистрации</span>
+            </h1>
+            <p class="lead text-muted">Выберите подходящий вариант для начала работы</p>
+        </div>
         <div class="row">
             <div class="col-md-6 mb-4">
-                <div class="card h-100 text-center">
-                    <div class="card-body">
-                        <i class="bi bi-person display-1 text-primary"></i>
-                        <h3 class="card-title mt-3">Пользователь</h3>
-                        <p class="card-text">Регистрация для бронирования номеров</p>
-                        <ul class="list-unstyled text-start">
-                            <li><i class="bi bi-check-circle text-success"></i> Просмотр номеров</li>
-                            <li><i class="bi bi-check-circle text-success"></i> Бронирование номеров</li>
-                            <li><i class="bi bi-check-circle text-success"></i> Управление бронированиями</li>
+                <div class="card h-100 text-center shadow-lg border-0">
+                    <div class="card-body p-5">
+                        <div class="mb-4">
+                            <div class="d-inline-block p-4 rounded-circle" style="background: var(--gradient-primary);">
+                                <i class="bi bi-person display-1 text-white"></i>
+                            </div>
+                        </div>
+                        <h3 class="card-title fw-bold mb-3">Пользователь</h3>
+                        <p class="card-text text-muted mb-4">Регистрация для бронирования номеров</p>
+                        <ul class="list-unstyled text-start mb-4">
+                            <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Просмотр номеров</li>
+                            <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Бронирование номеров</li>
+                            <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Управление бронированиями</li>
                         </ul>
-                        <a href="{% url 'booking:register_user' %}" class="btn btn-primary btn-lg mt-3">
-                            Зарегистрироваться как пользователь
+                        <a href="{% url 'booking:register_user' %}" class="btn btn-primary btn-lg w-100">
+                            <i class="bi bi-person-plus me-2"></i>Зарегистрироваться как пользователь
                         </a>
                     </div>
                 </div>
             </div>
             <div class="col-md-6 mb-4">
-                <div class="card h-100 text-center">
-                    <div class="card-body">
-                        <i class="bi bi-building display-1 text-success"></i>
-                        <h3 class="card-title mt-3">Организация</h3>
-                        <p class="card-text">Регистрация для управления отелями</p>
-                        <ul class="list-unstyled text-start">
-                            <li><i class="bi bi-check-circle text-success"></i> Создание отелей</li>
-                            <li><i class="bi bi-check-circle text-success"></i> Управление номерами</li>
-                            <li><i class="bi bi-check-circle text-success"></i> Просмотр бронирований</li>
+                <div class="card h-100 text-center shadow-lg border-0">
+                    <div class="card-body p-5">
+                        <div class="mb-4">
+                            <div class="d-inline-block p-4 rounded-circle" style="background: var(--gradient-success);">
+                                <i class="bi bi-building display-1 text-white"></i>
+                            </div>
+                        </div>
+                        <h3 class="card-title fw-bold mb-3">Организация</h3>
+                        <p class="card-text text-muted mb-4">Регистрация для управления отелями</p>
+                        <ul class="list-unstyled text-start mb-4">
+                            <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Создание отелей</li>
+                            <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Управление номерами</li>
+                            <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Просмотр бронирований</li>
                         </ul>
-                        <a href="{% url 'booking:register_organization' %}" class="btn btn-success btn-lg mt-3">
-                            Зарегистрироваться как организация
+                        <a href="{% url 'booking:register_organization' %}" class="btn btn-success btn-lg w-100">
+                            <i class="bi bi-building me-2"></i>Зарегистрироваться как организация
                         </a>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="text-center mt-4">
-            <p>Уже есть аккаунт? <a href="{% url 'booking:login' %}">Войти</a></p>
+        <div class="text-center mt-5">
+            <p class="text-muted">Уже есть аккаунт? <a href="{% url 'booking:login' %}" class="fw-bold">Войти</a></p>
         </div>
     </div>
 </div>
