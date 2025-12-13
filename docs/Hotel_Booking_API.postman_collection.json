@@ -1,0 +1,266 @@
+{
+	"info": {
+		"_postman_id": "hotel-booking-api",
+		"name": "Hotel Booking API",
+		"description": "API для системы бронирования отелей. Предоставляет endpoint для проверки доступности номеров.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Check Room Availability",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "X-Requested-With",
+						"value": "XMLHttpRequest",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/rooms/{{room_id}}/check-availability/?check_in={{check_in}}&check_out={{check_out}}",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"rooms",
+						"{{room_id}}",
+						"check-availability"
+					],
+					"query": [
+						{
+							"key": "check_in",
+							"value": "{{check_in}}",
+							"description": "Дата заезда в формате YYYY-MM-DD"
+						},
+						{
+							"key": "check_out",
+							"value": "{{check_out}}",
+							"description": "Дата выезда в формате YYYY-MM-DD"
+						}
+					]
+				},
+				"description": "Проверяет доступность номера на указанные даты и рассчитывает стоимость проживания."
+			},
+			"response": [
+				{
+					"name": "Success - Room Available",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "X-Requested-With",
+								"value": "XMLHttpRequest",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/rooms/1/check-availability/?check_in=2025-12-10&check_out=2025-12-15",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"rooms",
+								"1",
+								"check-availability"
+							],
+							"query": [
+								{
+									"key": "check_in",
+									"value": "2025-12-10"
+								},
+								{
+									"key": "check_out",
+									"value": "2025-12-15"
+								}
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"available\": true,\n    \"nights\": 5,\n    \"total_price\": 25000.00,\n    \"price_per_night\": 5000.00\n}"
+				},
+				{
+					"name": "Success - Room Not Available",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "X-Requested-With",
+								"value": "XMLHttpRequest",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/rooms/1/check-availability/?check_in=2025-12-10&check_out=2025-12-15",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"rooms",
+								"1",
+								"check-availability"
+							],
+							"query": [
+								{
+									"key": "check_in",
+									"value": "2025-12-10"
+								},
+								{
+									"key": "check_out",
+									"value": "2025-12-15"
+								}
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"available\": false,\n    \"nights\": 5,\n    \"total_price\": 25000.00,\n    \"price_per_night\": 5000.00,\n    \"booking_dates\": [\n        {\n            \"check_in\": \"10.12.2025\",\n            \"check_out\": \"15.12.2025\"\n        }\n    ]\n}"
+				},
+				{
+					"name": "Error - Missing Dates",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "X-Requested-With",
+								"value": "XMLHttpRequest",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/rooms/1/check-availability/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"rooms",
+								"1",
+								"check-availability"
+							]
+						}
+					},
+					"status": "Bad Request",
+					"code": 400,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"error\": \"Не указаны даты\"\n}"
+				},
+				{
+					"name": "Error - Room Not Found",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "X-Requested-With",
+								"value": "XMLHttpRequest",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/rooms/999/check-availability/?check_in=2025-12-10&check_out=2025-12-15",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"rooms",
+								"999",
+								"check-availability"
+							],
+							"query": [
+								{
+									"key": "check_in",
+									"value": "2025-12-10"
+								},
+								{
+									"key": "check_out",
+									"value": "2025-12-15"
+								}
+							]
+						}
+					},
+					"status": "Not Found",
+					"code": 404,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"error\": \"Номер не найден\"\n}"
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://127.0.0.1:8000",
+			"type": "string"
+		},
+		{
+			"key": "room_id",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "check_in",
+			"value": "2025-12-10",
+			"type": "string"
+		},
+		{
+			"key": "check_out",
+			"value": "2025-12-15",
+			"type": "string"
+		}
+	]
+}

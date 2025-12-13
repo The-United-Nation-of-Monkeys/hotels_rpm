@@ -91,7 +91,8 @@ class ProfileView(LoginRequiredMixin, UpdateView):
     success_url = reverse_lazy('booking:profile')
     
     def get_object(self):
-        return self.request.user.profile
+        profile, created = UserProfile.objects.get_or_create(user=self.request.user)
+        return profile
     
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -453,18 +454,43 @@ class BookingCreateView(LoginRequiredMixin, CreateView):
             messages.error(self.request, 'Необходимо выбрать или создать гостя')
             return self.form_invalid(form)
         
-        # Дополнительная проверка доступности номера
+        # Дополнительная проверка доступности номера перед сохранением
+        # Это предотвращает двойное бронирование, если два пользователя одновременно пытаются забронировать
         check_in_date = form.cleaned_data.get('check_in_date')
         check_out_date = form.cleaned_data.get('check_out_date')
         room = form.cleaned_data.get('room')
         
-        # Проверка доступности номера уже выполняется в форме через clean()
-        # Дополнительная проверка здесь не нужна, так как форма уже проверит это
+        # Атомарная проверка доступности прямо перед сохранением
+        if room and check_in_date and check_out_date:
+            from django.db import transaction
+            with transaction.atomic():
+                # Используем select_for_update для блокировки строки в БД
+                conflicting_bookings = Booking.objects.select_for_update().filter(
+                    room=room,
+                    check_in_date__lt=check_out_date,
+                    check_out_date__gt=check_in_date
+                )
+                
+                if conflicting_bookings.exists():
+                    # Формируем список дат занятости
+                    booking_dates = []
+                    for booking in conflicting_bookings:
+                        booking_dates.append(
+                            f"{booking.check_in_date.strftime('%d.%m.%Y')} - {booking.check_out_date.strftime('%d.%m.%Y')}"
+                        )
+                    dates_str = ', '.join(booking_dates)
+                    messages.error(self.request, f'НОМЕР УЖЕ ЗАНЯТ в это время. Забронирован: {dates_str}. Пожалуйста, выберите другие даты.')
+                    context = self.get_context_data(form=form)
+                    if guest_id:
+                        context['selected_guest_id'] = int(guest_id) if guest_id.isdigit() else None
+                    return self.render_to_response(context)
+                
+                # Сохраняем бронирование внутри транзакции
+                booking = form.save(commit=False)
+                booking.guest = guest
+                booking.user = self.request.user
+                booking.save()
         
-        booking = form.save(commit=False)
-        booking.guest = guest
-        booking.user = self.request.user
-        booking.save()
         messages.success(self.request, 'Бронирование успешно создано!')
         return redirect(self.success_url)
     
@@ -494,6 +520,7 @@ from django.http import JsonResponse
 def check_room_availability(request, room_id):
     """Проверка доступности номера через AJAX"""
     from datetime import datetime
+    from django.utils import timezone
     
     check_in = request.GET.get('check_in')
     check_out = request.GET.get('check_out')
@@ -509,7 +536,11 @@ def check_room_availability(request, room_id):
         if check_out_date <= check_in_date:
             return JsonResponse({'error': 'Дата выезда должна быть позже даты заезда'}, status=400)
         
+        if check_in_date < timezone.now().date():
+            return JsonResponse({'error': 'Дата заезда не может быть в прошлом'}, status=400)
+        
         # Проверяем пересечения с существующими бронированиями
+        # Используем ту же логику, что и в форме для консистентности
         conflicting_bookings = Booking.objects.filter(
             room=room,
             check_in_date__lt=check_out_date,
@@ -542,5 +573,7 @@ def check_room_availability(request, room_id):
         return JsonResponse(response_data)
     except Room.DoesNotExist:
         return JsonResponse({'error': 'Номер не найден'}, status=404)
-    except ValueError:
-        return JsonResponse({'error': 'Неверный формат даты'}, status=400)
+    except ValueError as e:
+        return JsonResponse({'error': f'Неверный формат даты: {str(e)}'}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': f'Ошибка при проверке доступности: {str(e)}'}, status=500)

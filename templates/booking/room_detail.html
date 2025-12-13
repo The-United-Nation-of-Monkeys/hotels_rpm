@@ -49,7 +49,7 @@
             </div>
         </div>
         
-        <div class="card border-0 shadow-lg mb-3">
+        <!-- <div class="card border-0 shadow-lg mb-3">
             <div class="card-header" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
                 <h5 class="mb-0 text-white"><i class="bi bi-calculator"></i> Проверка доступности и расчет стоимости</h5>
             </div>
@@ -69,7 +69,7 @@
                     <div id="availability-result" class="mt-3"></div>
                 </div>
             </div>
-        </div>
+        </div> -->
         
         {% if is_available is not None %}
         <div class="card mt-3">
@@ -114,12 +114,22 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        console.log('Скрипт загружен');
         const pricePerNight = {{ room.price_per_night }};
         const roomId = {{ room.pk }};
+        console.log('roomId:', roomId, 'pricePerNight:', pricePerNight);
+        
         const checkInInput = document.getElementById('calc-check-in');
         const checkOutInput = document.getElementById('calc-check-out');
         const checkBtn = document.getElementById('check-availability-btn');
         const resultDiv = document.getElementById('availability-result');
+        
+        console.log('Элементы DOM:', {
+            checkInInput: !!checkInInput,
+            checkOutInput: !!checkOutInput,
+            checkBtn: !!checkBtn,
+            resultDiv: !!resultDiv
+        });
         
         if (!checkInInput || !checkOutInput || !checkBtn || !resultDiv) {
             console.error('Не найдены необходимые элементы на странице', {
@@ -131,65 +141,95 @@
             return;
         }
         
+        console.log('Все элементы найдены, настраиваем обработчики');
+        
         // Устанавливаем минимальную дату на сегодня
-        const today = new Date().toISOString().split('T')[0];
-        checkInInput.setAttribute('min', today);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const todayStr = today.toISOString().split('T')[0];
+        checkInInput.setAttribute('min', todayStr);
         
         checkInInput.addEventListener('change', function() {
-            if (checkOutInput) {
-                checkOutInput.setAttribute('min', this.value);
+            if (checkOutInput && this.value) {
+                // Устанавливаем минимальную дату выезда на день после заезда
+                const checkInDate = new Date(this.value);
+                checkInDate.setDate(checkInDate.getDate() + 1);
+                const minCheckOut = checkInDate.toISOString().split('T')[0];
+                checkOutInput.setAttribute('min', minCheckOut);
+                
+                // Если дата выезда уже выбрана и она меньше минимальной, сбрасываем её
+                if (checkOutInput.value && checkOutInput.value <= this.value) {
+                    checkOutInput.value = '';
+                }
             }
         });
         
-        checkBtn.addEventListener('click', function(e) {
+        // Обработчик клика на кнопку
+        checkBtn.onclick = function(e) {
             e.preventDefault();
             e.stopPropagation();
             
-            console.log('Кнопка нажата');
+            console.log('Кнопка нажата!');
+            
             const checkIn = checkInInput.value;
             const checkOut = checkOutInput.value;
             
+            console.log('Даты:', { checkIn, checkOut });
+            
             if (!checkIn || !checkOut) {
-                resultDiv.innerHTML = '<div class="alert alert-warning">Пожалуйста, выберите даты заезда и выезда</div>';
-                return;
+                resultDiv.innerHTML = '<div class="alert alert-warning"><i class="bi bi-exclamation-triangle"></i> Пожалуйста, выберите даты заезда и выезда</div>';
+                return false;
             }
             
             const checkInDate = new Date(checkIn);
             const checkOutDate = new Date(checkOut);
             
             if (checkOutDate <= checkInDate) {
-                resultDiv.innerHTML = '<div class="alert alert-warning">Дата выезда должна быть позже даты заезда</div>';
-                return;
+                resultDiv.innerHTML = '<div class="alert alert-warning"><i class="bi bi-exclamation-triangle"></i> Дата выезда должна быть позже даты заезда</div>';
+                return false;
             }
             
             // Показываем загрузку
+            const originalText = checkBtn.innerHTML;
             checkBtn.disabled = true;
-            checkBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Проверка...';
+            checkBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Проверка...';
             resultDiv.innerHTML = '';
             
             // Проверяем доступность через AJAX
-            const url = `{% url 'booking:check_room_availability' room.pk %}?check_in=${checkIn}&check_out=${checkOut}`;
+            const url = `/rooms/${roomId}/check-availability/?check_in=${encodeURIComponent(checkIn)}&check_out=${encodeURIComponent(checkOut)}`;
             
-            console.log('Отправка запроса:', url);
+            console.log('Отправка запроса на:', url);
             
             fetch(url, {
                 method: 'GET',
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',
-                }
+                    'Accept': 'application/json',
+                },
+                credentials: 'same-origin'
             })
                 .then(response => {
-                    console.log('Получен ответ:', response.status);
+                    console.log('Статус ответа:', response.status);
                     if (!response.ok) {
                         return response.json().then(data => {
-                            console.error('Ошибка сервера:', data);
-                            throw new Error(data.error || 'Ошибка сервера');
+                            throw new Error(data.error || `Ошибка сервера (${response.status})`);
+                        }).catch(err => {
+                            if (err instanceof SyntaxError) {
+                                throw new Error(`Ошибка сервера: ${response.status}`);
+                            }
+                            throw err;
                         });
                     }
                     return response.json();
                 })
                 .then(data => {
-                    console.log('Данные получены:', data);
+                    console.log('Получены данные:', data);
+                    
+                    if (data.error) {
+                        resultDiv.innerHTML = `<div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> ${data.error}</div>`;
+                        return;
+                    }
+                    
                     if (data.available) {
                         resultDiv.innerHTML = `
                             <div class="alert alert-success">
@@ -199,31 +239,41 @@
                             </div>
                         `;
                     } else {
-                        // Формируем список дат занятости
                         let datesList = '';
                         if (data.booking_dates && data.booking_dates.length > 0) {
-                            const datesStrings = data.booking_dates.map(booking => 
+                            datesList = data.booking_dates.map(booking => 
                                 `${booking.check_in} - ${booking.check_out}`
-                            );
-                            datesList = datesStrings.join(', ');
+                            ).join(', ');
                         }
                         
                         resultDiv.innerHTML = `
                             <div class="alert alert-danger">
                                 <h6><i class="bi bi-x-circle"></i> Номер не доступен</h6>
-                                <p class="mb-0">Номер забронирован на следующие даты: ${datesList || 'на выбранные даты'}</p>
+                                <p class="mb-0"><strong>Номер уже забронирован на следующие даты:</strong></p>
+                                <p class="mb-0 mt-2">${datesList || 'на выбранные даты'}</p>
+                                <p class="mb-0 mt-2"><small>Пожалуйста, выберите другие даты для бронирования.</small></p>
                             </div>
                         `;
                     }
                 })
                 .catch(error => {
-                    console.error('Ошибка:', error);
-                    resultDiv.innerHTML = `<div class="alert alert-danger"><strong>Ошибка:</strong> ${error.message}</div>`;
+                    console.error('Ошибка при запросе:', error);
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-danger">
+                            <h6><i class="bi bi-exclamation-triangle"></i> Ошибка</h6>
+                            <p class="mb-0">${error.message || 'Произошла ошибка при проверке доступности'}</p>
+                        </div>
+                    `;
                 })
                 .finally(() => {
                     checkBtn.disabled = false;
-                    checkBtn.innerHTML = '<i class="bi bi-search"></i> Проверить доступность и рассчитать стоимость';
+                    checkBtn.innerHTML = originalText;
                 });
+            
+            return false;
+        };
+        
+        console.log('Обработчик событий установлен на кнопку');
         });
     </script>
 {% endblock %}

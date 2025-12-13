@@ -1,0 +1,76 @@
+// ER-диаграмма базы данных системы бронирования отелей
+// Можно импортировать на https://dbdiagram.io
+
+Table User {
+  id integer [primary key]
+  username varchar
+  email varchar
+  first_name varchar
+  last_name varchar
+  password varchar
+  is_staff boolean
+  is_active boolean
+  date_joined datetime
+}
+
+Table UserProfile {
+  id integer [primary key]
+  user_id integer [ref: > User.id, unique]
+  user_type varchar [note: 'user или organization']
+  phone varchar
+  address text
+  organization_name varchar
+  created_at datetime
+  updated_at datetime
+}
+
+Table Hotel {
+  hotel_id integer [primary key]
+  name varchar
+  description text
+  address text
+  phone varchar
+  email varchar
+  owner_id integer [ref: > User.id]
+  created_at datetime
+  updated_at datetime
+}
+
+Table Room {
+  room_id integer [primary key]
+  hotel_id integer [ref: > Hotel.hotel_id]
+  number varchar
+  name varchar
+  description text
+  type_name varchar
+  price_per_night decimal
+  created_at datetime
+  updated_at datetime
+}
+
+Table Guest {
+  guest_id integer [primary key]
+  first_name varchar
+  last_name varchar
+  middle_name varchar
+  passport_number varchar [unique]
+  email varchar
+  phone varchar
+  created_at datetime
+  updated_at datetime
+}
+
+Table Booking {
+  booking_id integer [primary key]
+  user_id integer [ref: > User.id]
+  guest_id integer [ref: > Guest.guest_id]
+  room_id integer [ref: > Room.room_id]
+  check_in_date date
+  check_out_date date
+  adults_count integer
+  children_count integer
+  total_price decimal
+  special_requests text
+  created_at datetime
+  updated_at datetime
+}
