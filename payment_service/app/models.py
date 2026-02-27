@@ -1,6 +1,6 @@
 import uuid
 from enum import Enum
-from sqlalchemy import Column, String, Numeric, DateTime, Text
+from sqlalchemy import Column, String, Numeric, DateTime, Text, Integer
 from sqlalchemy.sql import func
 
 from app.database import Base
@@ -19,7 +19,8 @@ class Payment(Base):
     __tablename__ = "payments"
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    booking_id = Column(String(36), nullable=False, index=True)
+    # booking_id теперь числовой идентификатор (PK из Booking Service)
+    booking_id = Column(Integer, nullable=False, index=True)
     status = Column(String(20), nullable=False, default=PaymentStatus.CREATED.value)
     amount = Column(Numeric(12, 2), nullable=False)
     currency = Column(String(10), nullable=False, default="RUB")

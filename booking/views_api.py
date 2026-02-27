@@ -21,9 +21,9 @@ logger = logging.getLogger(__name__)
 def _booking_to_json(booking: Booking) -> dict:
     """Сериализация бронирования в формат API (totalPrice вычислен при создании)."""
     return {
-        "id": str(booking.booking_id),
-        "roomId": str(booking.room_id),
-        "guestId": str(booking.guest_id),
+        "id": booking.booking_id,
+        "roomId": booking.room_id,
+        "guestId": booking.guest_id,
         "status": booking.status,
         "checkInDate": booking.check_in_date.isoformat(),
         "checkOutDate": booking.check_out_date.isoformat(),
@@ -97,31 +97,36 @@ def _api_create_booking(request):
         status=Booking.STATUS_PAYMENT_PENDING,
     )
     booking.save()
-    payment_url = getattr(settings, "PAYMENT_SERVICE_URL", "http://localhost:8082").rstrip("/")
-    payload = {
-        "bookingId": str(booking.booking_id),
-        "amount": float(total_price),
-        "currency": "RUB",
-    }
-    try:
-        with httpx.Client(timeout=10.0) as client:
-            resp = client.post(f"{payment_url}/api/payments", json=payload)
-            if resp.status_code not in (200, 201):
-                logger.warning("Payment service returned %s: %s", resp.status_code, resp.text)
-                booking.status = Booking.STATUS_PAYMENT_FAILED
-                booking.save(update_fields=["status"])
-                return JsonResponse(
-                    {"error": "Payment service error", "code": "PAYMENT_ERROR"},
-                    status=503,
-                )
-    except httpx.RequestError as e:
-        logger.exception("Payment service unreachable: %s", e)
-        booking.status = Booking.STATUS_PAYMENT_FAILED
-        booking.save(update_fields=["status"])
-        return JsonResponse(
-            {"error": "Payment service unreachable", "code": "PAYMENT_UNREACHABLE"},
-            status=503,
-        )
+
+    # Если флаг PAYMENT_ENABLED включён, вызываем Payment Service
+    if getattr(settings, "PAYMENT_ENABLED", True):
+        payment_url = getattr(settings, "PAYMENT_SERVICE_URL", "http://localhost:8082").rstrip("/")
+        payload = {
+            "bookingId": booking.booking_id,
+            "amount": float(total_price),
+            "currency": "RUB",
+        }
+        try:
+            with httpx.Client(timeout=10.0) as client:
+                resp = client.post(f"{payment_url}/api/payments", json=payload)
+                if resp.status_code not in (200, 201):
+                    logger.warning("Payment service returned %s: %s", resp.status_code, resp.text)
+                    booking.status = Booking.STATUS_PAYMENT_FAILED
+                    booking.save(update_fields=["status"])
+                    return JsonResponse(
+                        {"error": "Payment service error", "code": "PAYMENT_ERROR"},
+                        status=503,
+                    )
+        except httpx.RequestError as e:
+            logger.exception("Payment service unreachable: %s", e)
+            booking.status = Booking.STATUS_PAYMENT_FAILED
+            booking.save(update_fields=["status"])
+            return JsonResponse(
+                {"error": "Payment service unreachable", "code": "PAYMENT_UNREACHABLE"},
+                status=503,
+            )
+
+    # Если PAYMENT_ENABLED = False, просто возвращаем созданное бронирование без обращения в Payment Service
     return JsonResponse(_booking_to_json(booking), status=201)
 
 

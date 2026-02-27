@@ -1,4 +1,4 @@
-# Запуск всех трёх сервисов: Booking (Django), Payment, Notification
+ # Запуск всех трёх сервисов: Booking (Django), Payment, Notification
 # docker-compose up --build
 # Порядок запуска: notification → payment → booking (без циклических зависимостей)
 
@@ -27,6 +27,7 @@ services:
       - "8000:8000"
     environment:
       PAYMENT_SERVICE_URL: http://payment:8082
+      PAYMENT_ENABLED: "false"
     depends_on:
       - payment
     command: sh -c "python manage.py migrate --noinput && python manage.py runserver 0.0.0.0:8000"

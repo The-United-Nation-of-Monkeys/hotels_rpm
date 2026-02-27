@@ -101,7 +101,7 @@ def list_payments(
     limit: int = 20,
     offset: int = 0,
     status: str | None = None,
-    booking_id: str | None = None,
+    booking_id: int | None = None,
     db: Session = Depends(get_db),
 ):
     """Список платежей с пагинацией и фильтрами."""
@@ -121,7 +121,7 @@ def list_payments(
 
 
 @router.get("/payments/by-booking/{booking_id}", response_model=list[PaymentResponse])
-def get_payments_by_booking(booking_id: str, db: Session = Depends(get_db)):
+def get_payments_by_booking(booking_id: int, db: Session = Depends(get_db)):
     """Платежи по бронированию."""
     items = (
         db.query(Payment)

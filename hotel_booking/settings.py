@@ -119,3 +119,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Booking Service API: URL Payment Service (for create booking flow)
 PAYMENT_SERVICE_URL = os.environ.get('PAYMENT_SERVICE_URL', 'http://localhost:8082')
+# Флаг: вызывать ли Payment Service при создании бронирования
+PAYMENT_ENABLED = os.environ.get('PAYMENT_ENABLED', 'true').lower() == 'true'
