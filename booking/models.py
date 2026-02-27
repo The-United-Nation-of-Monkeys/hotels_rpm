@@ -126,6 +126,19 @@ class Guest(models.Model):
 
 class Booking(models.Model):
     """Модель бронирования"""
+    STATUS_CREATED = 'CREATED'
+    STATUS_PAYMENT_PENDING = 'PAYMENT_PENDING'
+    STATUS_PAID = 'PAID'
+    STATUS_CANCELLED = 'CANCELLED'
+    STATUS_PAYMENT_FAILED = 'PAYMENT_FAILED'
+    STATUS_CHOICES = [
+        (STATUS_CREATED, 'Создано'),
+        (STATUS_PAYMENT_PENDING, 'Ожидает оплаты'),
+        (STATUS_PAID, 'Оплачено'),
+        (STATUS_CANCELLED, 'Отменено'),
+        (STATUS_PAYMENT_FAILED, 'Ошибка оплаты'),
+    ]
+
     booking_id = models.BigAutoField(primary_key=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='bookings', null=True, blank=True, verbose_name="Пользователь")
     guest = models.ForeignKey(Guest, on_delete=models.CASCADE, related_name='bookings', verbose_name="Гость")
@@ -136,6 +149,12 @@ class Booking(models.Model):
     children_count = models.IntegerField(default=0, validators=[MinValueValidator(0)], verbose_name="Количество детей")
     total_price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Стоимость проживания")
     special_requests = models.TextField(null=True, blank=True, verbose_name="Пожелания")
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=STATUS_PAYMENT_PENDING,
+        verbose_name="Статус бронирования",
+    )
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Дата обновления")
 

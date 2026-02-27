@@ -1,0 +1,236 @@
+openapi: 3.0.3
+info:
+  title: Booking Service API
+  description: |
+    Сервис бронирования. Ответственность:
+    - Создание бронирования
+    - Хранение статуса бронирования
+    - Инициация оплаты
+    - Подтверждение оплаты
+  version: 1.0.0
+  contact:
+    name: API Support
+
+servers:
+  - url: http://localhost:8081
+    description: Booking Service
+
+paths:
+  /api/bookings:
+    get:
+      operationId: listBookings
+      summary: Список бронирований
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - CREATED
+              - PAYMENT_PENDING
+              - PAID
+              - CANCELLED
+              - PAYMENT_FAILED
+      responses:
+        '200':
+          description: Список бронирований
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingListResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+    post:
+      operationId: createBooking
+      summary: Создание бронирования
+      description: |
+        Создаёт запись в БД, считает totalPrice = (check_out − check_in) × room.price_per_night,
+        статус → PAYMENT_PENDING, отправляется запрос в Payment Service.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBookingRequest'
+      responses:
+        '201':
+          description: Бронирование создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingResponse'
+        '400':
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера
+
+  /api/bookings/{id}/confirm-payment:
+    post:
+      operationId: confirmPayment
+      summary: Подтверждение оплаты
+      description: |
+        Вызывается Notification Service после успешной оплаты.
+        Проверяет статус PAYMENT_PENDING, меняет статус → PAID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Оплата подтверждена
+        '400':
+          description: Неверный статус бронирования
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Бронирование не найдено
+
+  /api/bookings/{id}/cancel:
+    post:
+      operationId: cancelBooking
+      summary: Отмена бронирования
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Бронирование отменено
+        '404':
+          description: Бронирование не найдено
+
+  /api/bookings/{id}:
+    get:
+      operationId: getBooking
+      summary: Получить бронирование по ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Бронирование
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingResponse'
+        '404':
+          description: Не найдено
+
+components:
+  schemas:
+    CreateBookingRequest:
+      type: object
+      required:
+        - roomId
+        - guestId
+        - checkInDate
+        - checkOutDate
+        - adultsCount
+      properties:
+        roomId:
+          type: string
+          format: uuid
+        guestId:
+          type: string
+          format: uuid
+        checkInDate:
+          type: string
+          format: date
+        checkOutDate:
+          type: string
+          format: date
+        adultsCount:
+          type: integer
+          minimum: 1
+        childrenCount:
+          type: integer
+          minimum: 0
+          default: 0
+        specialRequests:
+          type: string
+
+    BookingResponse:
+      type: object
+      description: totalPrice вычисляется при создании как число ночей × цена за ночь комнаты (check_out − check_in).
+      properties:
+        id:
+          type: string
+          format: uuid
+        roomId:
+          type: string
+          format: uuid
+        guestId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+            - CREATED
+            - PAYMENT_PENDING
+            - PAID
+            - CANCELLED
+            - PAYMENT_FAILED
+        checkInDate:
+          type: string
+          format: date
+        checkOutDate:
+          type: string
+          format: date
+        adultsCount:
+          type: integer
+        childrenCount:
+          type: integer
+        totalPrice:
+          type: number
+          format: decimal
+        createdAt:
+          type: string
+          format: date-time
+
+    BookingListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/BookingResponse'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        code:
+          type: string

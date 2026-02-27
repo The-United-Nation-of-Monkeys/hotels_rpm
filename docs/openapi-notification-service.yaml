@@ -1,0 +1,200 @@
+openapi: 3.0.3
+info:
+  title: Notification Service API
+  description: |
+    Сервис уведомлений. Ответственность:
+    - Получение события об оплате
+    - Сохранение уведомления
+    - Подтверждение оплаты в Booking Service (POST /api/bookings/{id}/confirm-payment)
+  version: 1.0.0
+  contact:
+    name: API Support
+
+servers:
+  - url: http://localhost:8083
+    description: Notification Service
+
+paths:
+  /api/notifications/payment:
+    post:
+      operationId: handlePaymentNotification
+      summary: Получение события об оплате
+      description: |
+        Вызывается Payment Service. Сохраняет уведомление в БД.
+        При статусе SUCCESS — отправляет POST в Booking Service confirm-payment.
+        При FAILED — можно вызвать endpoint отмены бронирования.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentNotificationRequest'
+      responses:
+        '200':
+          description: Уведомление обработано
+        '400':
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера
+
+  /api/notifications:
+    get:
+      operationId: getAllNotifications
+      summary: Получить список уведомлений
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum:
+              - PAYMENT
+              - BOOKING
+      responses:
+        '200':
+          description: Список уведомлений
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationListResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+
+  /api/notifications/{id}:
+    get:
+      operationId: getNotification
+      summary: Получить уведомление по ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Уведомление
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+        '404':
+          description: Уведомление не найдено
+
+  /api/notifications/{id}/read:
+    patch:
+      operationId: markNotificationRead
+      summary: Отметить уведомление как прочитанное
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                read:
+                  type: boolean
+                  default: true
+      responses:
+        '200':
+          description: Обновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+        '404':
+          description: Уведомление не найдено
+
+components:
+  schemas:
+    PaymentNotificationRequest:
+      type: object
+      required:
+        - paymentId
+        - bookingId
+        - status
+      properties:
+        paymentId:
+          type: string
+          format: uuid
+        bookingId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+            - SUCCESS
+            - FAILED
+        amount:
+          type: number
+          format: decimal
+        currency:
+          type: string
+        failureReason:
+          type: string
+        occurredAt:
+          type: string
+          format: date-time
+
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum:
+            - PAYMENT
+            - BOOKING
+        payload:
+          type: object
+        createdAt:
+          type: string
+          format: date-time
+        processed:
+          type: boolean
+        read:
+          type: boolean
+          description: Отмечено как прочитанное
+
+    NotificationListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notification'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        code:
+          type: string

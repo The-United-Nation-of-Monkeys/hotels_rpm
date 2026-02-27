@@ -1,0 +1,32 @@
+# Запуск всех трёх сервисов: Booking (Django), Payment, Notification
+# docker-compose up --build
+# Порядок запуска: notification → payment → booking (без циклических зависимостей)
+
+services:
+  notification:
+    build: ./notification_service
+    ports:
+      - "8083:8083"
+    environment:
+      NOTIFICATION_BOOKING_SERVICE_URL: http://booking:8000
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8083
+
+  payment:
+    build: ./payment_service
+    ports:
+      - "8082:8082"
+    environment:
+      PAYMENT_NOTIFICATION_SERVICE_URL: http://notification:8083
+    depends_on:
+      - notification
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8082
+
+  booking:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      PAYMENT_SERVICE_URL: http://payment:8082
+    depends_on:
+      - payment
+    command: sh -c "python manage.py migrate --noinput && python manage.py runserver 0.0.0.0:8000"

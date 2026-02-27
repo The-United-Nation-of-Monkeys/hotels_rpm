@@ -25,6 +25,14 @@ venv/
 env/
 ENV/
 
+# Payment Service (FastAPI)
+payment_service/payment_service.db
+payment_service/.env
+
+# Notification Service (FastAPI)
+notification_service/notification_service.db
+notification_service/.env
+
 # Django
 *.log
 local_settings.py

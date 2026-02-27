@@ -1,0 +1,204 @@
+openapi: 3.0.3
+info:
+  title: Payment Service API
+  description: |
+    Сервис оплаты. Ответственность:
+    - Обработка оплаты
+    - Хранение статуса платежа
+    - Отправка события об успешной/неуспешной оплате в Notification Service
+  version: 1.0.0
+  contact:
+    name: API Support
+
+servers:
+  - url: http://localhost:8082
+    description: Payment Service
+
+paths:
+  /api/payments:
+    post:
+      operationId: createPayment
+      summary: Создание платежа
+      description: |
+        Вызывается Booking Service. Создаётся платёж, статус → PROCESSING,
+        выполняется оплата. При успехе → SUCCESS, при ошибке → FAILED.
+        Отправляется событие в Notification Service.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePaymentRequest'
+      responses:
+        '201':
+          description: Платёж создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+        '400':
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера
+    get:
+      operationId: listPayments
+      summary: Список платежей
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - CREATED
+              - PROCESSING
+              - SUCCESS
+              - FAILED
+        - name: bookingId
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Список платежей
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentListResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+
+  /api/payments/{id}:
+    get:
+      operationId: getPayment
+      summary: Получить статус платежа по ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Данные платежа
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+        '404':
+          description: Платёж не найден
+
+  /api/payments/by-booking/{bookingId}:
+    get:
+      operationId: getPaymentsByBooking
+      summary: Платежи по бронированию
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Список платежей по бронированию
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PaymentResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+
+components:
+  schemas:
+    CreatePaymentRequest:
+      type: object
+      required:
+        - bookingId
+        - amount
+        - currency
+      properties:
+        bookingId:
+          type: string
+          format: uuid
+        amount:
+          type: number
+          format: decimal
+          minimum: 0
+        currency:
+          type: string
+          example: RUB
+        description:
+          type: string
+        metadata:
+          type: object
+
+    PaymentResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        bookingId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+            - CREATED
+            - PROCESSING
+            - SUCCESS
+            - FAILED
+        amount:
+          type: number
+          format: decimal
+        currency:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        failureReason:
+          type: string
+          description: Причина при статусе FAILED
+
+    PaymentListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaymentResponse'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        code:
+          type: string

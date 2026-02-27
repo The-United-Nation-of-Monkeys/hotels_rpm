@@ -312,6 +312,8 @@ GET /rooms/1/check-availability/?check_in=2025-12-10&check_out=2025-12-15
 - **Архитектурная схема:** [`docs/architecture.md`](docs/architecture.md)
 - **API документация:** [`docs/API.md`](docs/API.md)
 - **Postman коллекция:** [`docs/Hotel_Booking_API.postman_collection.json`](docs/Hotel_Booking_API.postman_collection.json)
+- **OpenAPI микросервисов (целевая архитектура):** [`docs/openapi-booking-service.yaml`](docs/openapi-booking-service.yaml), [`docs/openapi-payment-service.yaml`](docs/openapi-payment-service.yaml), [`docs/openapi-notification-service.yaml`](docs/openapi-notification-service.yaml)
+- **Сводка API микросервисов (минимум 4 ручки на сервис):** [`docs/microservices_api.md`](docs/microservices_api.md) — эндпоинты, запуск трёх сервисов (Django Booking, Payment, Notification) и переменные окружения для связки (итоговый готовый вариант).
 
 ## 🔒 Валидация данных
 

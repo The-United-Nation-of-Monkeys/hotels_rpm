@@ -182,3 +182,20 @@ else:
 - API не требует аутентификации для проверки доступности
 - Валидация дат выполняется на сервере
 - Проверка пересечений бронирований использует логику: `check_in_date < check_out AND check_out_date > check_in`
+
+---
+
+## OpenAPI: целевая микросервисная архитектура
+
+Текущее приложение — монолит на Django. **Целевые REST API** трёх микросервисов (Booking, Payment, Notification) описаны в OpenAPI 3.0; у каждого сервиса **минимум по 4 ручки**.
+
+- **Сводка всех эндпоинтов:** [Микросервисы — список API](microservices_api.md)
+- **Поток:** Клиент → Booking Service → Payment Service → Notification Service → Booking Service (confirm/cancel).
+
+| Сервис | Файл OpenAPI | Ручки |
+|--------|----------------|-------|
+| **Booking Service** | [openapi-booking-service.yaml](openapi-booking-service.yaml) | GET/POST `/api/bookings`, GET `/api/bookings/{id}`, POST confirm-payment, POST cancel |
+| **Payment Service** | [openapi-payment-service.yaml](openapi-payment-service.yaml) | GET/POST `/api/payments`, GET by-booking, GET `/api/payments/{id}` |
+| **Notification Service** | [openapi-notification-service.yaml](openapi-notification-service.yaml) | GET/POST `/api/notifications`, GET `/api/notifications/{id}`, PATCH `.../read` |
+
+Спеки описывают только REST-контракты; интеграцию можно дополнить событийной моделью (Kafka).
