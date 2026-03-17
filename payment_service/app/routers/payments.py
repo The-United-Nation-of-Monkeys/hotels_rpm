@@ -39,7 +39,7 @@ def _process_payment_sync(payment: Payment) -> None:
     # При неудаче: payment.status = PaymentStatus.FAILED.value; payment.failure_reason = "..."
 
 
-def _notify_payment_result(payment: Payment) -> None:
+async def _notify_payment_result(payment: Payment) -> None:
     """Отправить событие об оплате в Notification Service."""
     base = getattr(settings, "notification_service_url", "http://localhost:8083").rstrip("/")
     url = f"{base}/api/notifications/payment"
@@ -53,8 +53,8 @@ def _notify_payment_result(payment: Payment) -> None:
     if payment.status == PaymentStatus.FAILED.value and payment.failure_reason:
         payload["failureReason"] = payment.failure_reason
     try:
-        with httpx.Client(timeout=10.0) as client:
-            r = client.post(url, json=payload)
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            r = await client.post(url, json=payload)
             if r.status_code not in (200, 201):
                 logger.warning("Notification service returned %s: %s", r.status_code, r.text)
     except httpx.RequestError as e:
@@ -63,7 +63,7 @@ def _notify_payment_result(payment: Payment) -> None:
 
 
 @router.post("/payments", response_model=PaymentResponse, status_code=201)
-def create_payment(request: CreatePaymentRequest, db: Session = Depends(get_db)):
+async def create_payment(request: CreatePaymentRequest, db: Session = Depends(get_db)):
     """
     Создание платежа. Вызывается Booking Service.
     Статус: CREATED → PROCESSING → SUCCESS или FAILED.
@@ -91,13 +91,13 @@ def create_payment(request: CreatePaymentRequest, db: Session = Depends(get_db))
     db.refresh(payment)
 
     # Уведомить Notification Service (не падать при ошибке сети)
-    _notify_payment_result(payment)
+    await _notify_payment_result(payment)
 
     return _payment_to_response(payment)
 
 
 @router.get("/payments", response_model=PaymentListResponse)
-def list_payments(
+async def list_payments(
     limit: int = 20,
     offset: int = 0,
     status: str | None = None,
@@ -121,7 +121,7 @@ def list_payments(
 
 
 @router.get("/payments/by-booking/{booking_id}", response_model=list[PaymentResponse])
-def get_payments_by_booking(booking_id: str, db: Session = Depends(get_db)):
+async def get_payments_by_booking(booking_id: str, db: Session = Depends(get_db)):
     """Платежи по бронированию."""
     items = (
         db.query(Payment)
@@ -133,7 +133,7 @@ def get_payments_by_booking(booking_id: str, db: Session = Depends(get_db)):
 
 
 @router.get("/payments/{payment_id}", response_model=PaymentResponse)
-def get_payment(payment_id: uuid.UUID, db: Session = Depends(get_db)):
+async def get_payment(payment_id: uuid.UUID, db: Session = Depends(get_db)):
     """Получить статус платежа по ID."""
     payment = db.query(Payment).filter(Payment.id == str(payment_id)).first()
     if not payment:

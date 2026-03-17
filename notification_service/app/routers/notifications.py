@@ -33,24 +33,24 @@ def _notification_to_response(n: Notification) -> NotificationResponse:
     )
 
 
-def _call_booking_confirm(booking_id: str) -> None:
+async def _call_booking_confirm(booking_id: str) -> None:
     base = settings.booking_service_url.rstrip("/")
     url = f"{base}/api/bookings/{booking_id}/confirm-payment/"
     try:
-        with httpx.Client(timeout=10.0) as client:
-            r = client.post(url)
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            r = await client.post(url)
             if r.status_code != 200:
                 logger.warning("Booking confirm-payment returned %s: %s", r.status_code, r.text)
     except httpx.RequestError as e:
         logger.exception("Booking service unreachable (confirm): %s", e)
 
 
-def _call_booking_cancel(booking_id: str) -> None:
+async def _call_booking_cancel(booking_id: str) -> None:
     base = settings.booking_service_url.rstrip("/")
     url = f"{base}/api/bookings/{booking_id}/cancel/"
     try:
-        with httpx.Client(timeout=10.0) as client:
-            r = client.post(url)
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            r = await client.post(url)
             if r.status_code != 200:
                 logger.warning("Booking cancel returned %s: %s", r.status_code, r.text)
     except httpx.RequestError as e:
@@ -58,7 +58,7 @@ def _call_booking_cancel(booking_id: str) -> None:
 
 
 @router.post("/notifications/payment")
-def handle_payment_notification(
+async def handle_payment_notification(
     request: PaymentNotificationRequest,
     db: Session = Depends(get_db),
 ):
@@ -75,15 +75,15 @@ def handle_payment_notification(
     db.commit()
 
     if request.status == "SUCCESS":
-        _call_booking_confirm(request.booking_id)
+        await _call_booking_confirm(request.booking_id)
     elif request.status == "FAILED":
-        _call_booking_cancel(request.booking_id)
+        await _call_booking_cancel(request.booking_id)
 
     return {"ok": True}
 
 
 @router.get("/notifications", response_model=NotificationListResponse)
-def get_all_notifications(
+async def get_all_notifications(
     limit: int = 20,
     offset: int = 0,
     type: str | None = None,
@@ -103,7 +103,7 @@ def get_all_notifications(
 
 
 @router.get("/notifications/{notification_id}", response_model=NotificationResponse)
-def get_notification(notification_id: uuid.UUID, db: Session = Depends(get_db)):
+async def get_notification(notification_id: uuid.UUID, db: Session = Depends(get_db)):
     n = db.query(Notification).filter(Notification.id == str(notification_id)).first()
     if not n:
         raise HTTPException(status_code=404, detail="Уведомление не найдено")
@@ -111,7 +111,7 @@ def get_notification(notification_id: uuid.UUID, db: Session = Depends(get_db)):
 
 
 @router.patch("/notifications/{notification_id}/read", response_model=NotificationResponse)
-def mark_notification_read(
+async def mark_notification_read(
     notification_id: uuid.UUID,
     body: MarkReadBody | None = None,
     db: Session = Depends(get_db),
