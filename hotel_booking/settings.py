@@ -121,3 +121,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 PAYMENT_SERVICE_URL = os.environ.get('PAYMENT_SERVICE_URL', 'http://localhost:8082')
 # Флаг: вызывать ли Payment Service при создании бронирования
 PAYMENT_ENABLED = os.environ.get('PAYMENT_ENABLED', 'true').lower() == 'true'
+
+KAFKA_BOOTSTRAP_SERVERS = ["localhost:9092"]
+KAFKA_PAYMENT_TOPIC = "payments"
