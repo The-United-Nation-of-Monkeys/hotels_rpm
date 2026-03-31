@@ -137,8 +137,7 @@ components:
           type: string
           format: uuid
         bookingId:
-          type: string
-          format: uuid
+          type: integer
         status:
           type: string
           enum:

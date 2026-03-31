@@ -12,11 +12,11 @@ info:
     name: API Support
 
 servers:
-  - url: http://localhost:8081
+  - url: http://localhost:8000
     description: Booking Service
 
 paths:
-  /api/bookings:
+  /api/bookings/:
     get:
       operationId: listBookings
       summary: Список бронирований
@@ -78,7 +78,7 @@ paths:
         '500':
           description: Внутренняя ошибка сервера
 
-  /api/bookings/{id}/confirm-payment:
+  /api/bookings/{id}/confirm-payment/:
     post:
       operationId: confirmPayment
       summary: Подтверждение оплаты
@@ -90,8 +90,7 @@ paths:
           in: path
           required: true
           schema:
-            type: string
-            format: uuid
+            type: integer
       responses:
         '200':
           description: Оплата подтверждена
@@ -104,7 +103,7 @@ paths:
         '404':
           description: Бронирование не найдено
 
-  /api/bookings/{id}/cancel:
+  /api/bookings/{id}/cancel/:
     post:
       operationId: cancelBooking
       summary: Отмена бронирования
@@ -113,15 +112,14 @@ paths:
           in: path
           required: true
           schema:
-            type: string
-            format: uuid
+            type: integer
       responses:
         '200':
           description: Бронирование отменено
         '404':
           description: Бронирование не найдено
 
-  /api/bookings/{id}:
+  /api/bookings/{id}/:
     get:
       operationId: getBooking
       summary: Получить бронирование по ID
@@ -130,8 +128,7 @@ paths:
           in: path
           required: true
           schema:
-            type: string
-            format: uuid
+            type: integer
       responses:
         '200':
           description: Бронирование
@@ -154,11 +151,9 @@ components:
         - adultsCount
       properties:
         roomId:
-          type: string
-          format: uuid
+          type: integer
         guestId:
-          type: string
-          format: uuid
+          type: integer
         checkInDate:
           type: string
           format: date
@@ -180,14 +175,11 @@ components:
       description: totalPrice вычисляется при создании как число ночей × цена за ночь комнаты (check_out − check_in).
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
         roomId:
-          type: string
-          format: uuid
+          type: integer
         guestId:
-          type: string
-          format: uuid
+          type: integer
         status:
           type: string
           enum:

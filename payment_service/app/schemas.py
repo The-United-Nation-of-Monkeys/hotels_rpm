@@ -10,8 +10,8 @@ from pydantic import BaseModel, Field
 
 
 class CreatePaymentRequest(BaseModel):
-    """bookingId может быть строкой (Django PK) или UUID."""
-    booking_id: str = Field(..., alias="bookingId")
+    """bookingId — числовой идентификатор бронирования (Django PK)."""
+    booking_id: int = Field(..., alias="bookingId")
     amount: Decimal = Field(..., ge=0)
     currency: str = "RUB"
     description: Optional[str] = None
@@ -25,7 +25,7 @@ class CreatePaymentRequest(BaseModel):
 
 class PaymentResponse(BaseModel):
     id: UUID
-    booking_id: str  # совпадает с форматом из CreatePaymentRequest
+    booking_id: int  # совпадает с форматом из CreatePaymentRequest
     status: str  # CREATED | PROCESSING | SUCCESS | FAILED
     amount: Decimal
     currency: str

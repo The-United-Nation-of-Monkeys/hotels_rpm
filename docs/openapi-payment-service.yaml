@@ -70,8 +70,7 @@ paths:
         - name: bookingId
           in: query
           schema:
-            type: string
-            format: uuid
+            type: integer
       responses:
         '200':
           description: Список платежей
@@ -112,8 +111,7 @@ paths:
           in: path
           required: true
           schema:
-            type: string
-            format: uuid
+            type: integer
       responses:
         '200':
           description: Список платежей по бронированию
@@ -136,8 +134,7 @@ components:
         - currency
       properties:
         bookingId:
-          type: string
-          format: uuid
+          type: integer
         amount:
           type: number
           format: decimal
@@ -157,8 +154,7 @@ components:
           type: string
           format: uuid
         bookingId:
-          type: string
-          format: uuid
+          type: integer
         status:
           type: string
           enum:

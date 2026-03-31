@@ -7,9 +7,9 @@ from pydantic import BaseModel, Field
 
 
 class PaymentNotificationRequest(BaseModel):
-    """Тело запроса от Payment Service (camelCase в JSON). bookingId может быть строкой (Django PK)."""
+    """Тело запроса от Payment Service (camelCase в JSON). bookingId — числовой PK бронирования."""
     payment_id: str = Field(alias="paymentId")
-    booking_id: str = Field(alias="bookingId")
+    booking_id: int = Field(alias="bookingId")
     status: str  # SUCCESS | FAILED
     amount: Optional[Decimal] = None
     currency: Optional[str] = None

@@ -1,8 +1,37 @@
-# Запуск всех трёх сервисов: Booking (Django), Payment, Notification
+ # Запуск всех трёх сервисов: Booking (Django), Payment, Notification
 # docker-compose up --build
 # Порядок запуска: notification → payment → booking (без циклических зависимостей)
 
 services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    ports:
+      - "8080:8080"
+    depends_on:
+      - kafka
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+
   notification:
     build: ./notification_service
     ports:
@@ -18,10 +47,12 @@ services:
     environment:
       PAYMENT_NOTIFICATION_SERVICE_URL: http://notification:8083
       PAYMENT_RECEIPTS_DIR: /app/receipts
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     volumes:
       - payment_receipts:/app/receipts
     depends_on:
       - notification
+      - kafka
     command: uvicorn app.main:app --host 0.0.0.0 --port 8082
 
   booking:
@@ -29,9 +60,12 @@ services:
     ports:
       - "8000:8000"
     environment:
-      PAYMENT_SERVICE_URL: http://payment:8082
+      PAYMENT_ENABLED: "True"
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_PAYMENT_TOPIC: payments
     depends_on:
       - payment
+      - kafka
     command: sh -c "python manage.py migrate --noinput && python manage.py runserver 0.0.0.0:8000"
 
 volumes:

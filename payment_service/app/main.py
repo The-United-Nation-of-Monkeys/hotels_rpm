@@ -18,6 +18,9 @@ app = FastAPI(
     description="Сервис оплаты. Обработка оплаты, хранение статуса, события в Notification Service.",
     version="1.0.0",
     lifespan=lifespan,
+    docs_url="/docs",          # Swagger UI
+    redoc_url="/redoc",        # ReDoc
+    openapi_url="/openapi.json",
 )
 
 app.include_router(payments.router)

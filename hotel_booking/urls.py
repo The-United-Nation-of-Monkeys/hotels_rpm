@@ -15,14 +15,33 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
 from django.conf import settings
 from django.conf.urls.static import static
+from django.views.generic import TemplateView
+from django.views.static import serve as static_serve
+import os
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('booking.api_urls')),
     path('', include('booking.urls')),
+    # Swagger UI для Booking Service
+    path(
+        'swagger/',
+        TemplateView.as_view(template_name='swagger.html'),
+        name='booking-swagger-ui',
+    ),
+    # Отдача OpenAPI-спецификации для Swagger UI
+    re_path(
+        r'^swagger/openapi\.yaml$',
+        static_serve,
+        {
+            'document_root': os.path.join(settings.BASE_DIR, 'docs'),
+            'path': 'openapi-booking-service.yaml',
+        },
+        name='booking-openapi-yaml',
+    ),
 ]
 
 if settings.DEBUG:
