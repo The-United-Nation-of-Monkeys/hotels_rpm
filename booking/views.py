@@ -1,7 +1,9 @@
+from asgiref.sync import sync_to_async
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import ListView, DetailView, CreateView, TemplateView, UpdateView
 from django.contrib import messages
-from django.contrib.auth import login, logout
+from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
@@ -57,15 +59,14 @@ class OrganizationRegistrationView(CreateView):
 
 
 @require_http_methods(["GET", "POST"])
-def login_view(request):
+async def login_view(request):
     """Вход в систему"""
     if request.method == 'POST':
-        from django.contrib.auth import authenticate
         username = request.POST.get('username')
         password = request.POST.get('password')
-        user = authenticate(request, username=username, password=password)
+        user = await sync_to_async(authenticate)(request, username=username, password=password)
         if user is not None:
-            login(request, user)
+            await sync_to_async(login)(request, user)
             messages.success(request, f'Добро пожаловать, {user.username}!')
             if hasattr(user, 'profile') and user.profile.is_organization:
                 return redirect('booking:organization_panel')
@@ -76,9 +77,9 @@ def login_view(request):
 
 
 @login_required
-def logout_view(request):
+async def logout_view(request):
     """Выход из системы"""
-    logout(request)
+    await sync_to_async(logout)(request)
     messages.success(request, 'Вы успешно вышли из системы')
     return redirect('booking:home')
 
@@ -517,59 +518,56 @@ class ContactView(TemplateView):
 
 from django.http import JsonResponse
 
-def check_room_availability(request, room_id):
+async def check_room_availability(request, room_id):
     """Проверка доступности номера через AJAX"""
     from datetime import datetime
     from django.utils import timezone
-    
+
     check_in = request.GET.get('check_in')
     check_out = request.GET.get('check_out')
-    
+
     if not check_in or not check_out:
         return JsonResponse({'error': 'Не указаны даты'}, status=400)
-    
+
     try:
-        room = Room.objects.get(pk=room_id)
+        room = await Room.objects.aget(pk=room_id)
         check_in_date = datetime.strptime(check_in, '%Y-%m-%d').date()
         check_out_date = datetime.strptime(check_out, '%Y-%m-%d').date()
-        
+
         if check_out_date <= check_in_date:
             return JsonResponse({'error': 'Дата выезда должна быть позже даты заезда'}, status=400)
-        
+
         if check_in_date < timezone.now().date():
             return JsonResponse({'error': 'Дата заезда не может быть в прошлом'}, status=400)
-        
-        # Проверяем пересечения с существующими бронированиями
-        # Используем ту же логику, что и в форме для консистентности
+
         conflicting_bookings = Booking.objects.filter(
             room=room,
             check_in_date__lt=check_out_date,
-            check_out_date__gt=check_in_date
+            check_out_date__gt=check_in_date,
         ).order_by('check_in_date')
-        
-        is_available = not conflicting_bookings.exists()
+
+        is_available = not await conflicting_bookings.aexists()
         nights = (check_out_date - check_in_date).days
         total_price = float(room.price_per_night) * nights
-        
-        # Формируем список дат занятости
+
         booking_dates = []
         if not is_available:
-            for booking in conflicting_bookings:
+            async for booking in conflicting_bookings:
                 booking_dates.append({
                     'check_in': booking.check_in_date.strftime('%d.%m.%Y'),
-                    'check_out': booking.check_out_date.strftime('%d.%m.%Y')
+                    'check_out': booking.check_out_date.strftime('%d.%m.%Y'),
                 })
-        
+
         response_data = {
             'available': is_available,
             'nights': nights,
             'total_price': total_price,
-            'price_per_night': float(room.price_per_night)
+            'price_per_night': float(room.price_per_night),
         }
-        
+
         if not is_available:
             response_data['booking_dates'] = booking_dates
-        
+
         return JsonResponse(response_data)
     except Room.DoesNotExist:
         return JsonResponse({'error': 'Номер не найден'}, status=404)

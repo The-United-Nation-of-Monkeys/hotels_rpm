@@ -1,13 +1,23 @@
+import io
 import json
 import logging
 import uuid
+from pathlib import Path
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+from fastapi.responses import FileResponse
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import mm
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 from sqlalchemy.orm import Session
 
 from app.config import settings
-from app.database import get_db
+from app.database import SessionLocal, get_db
 from app.models import Payment, PaymentStatus
 from app.schemas import CreatePaymentRequest, PaymentListResponse, PaymentResponse
 
@@ -28,15 +38,150 @@ def _payment_to_response(p: Payment) -> PaymentResponse:
     )
 
 
+# Шрифт с кириллицей для чека (регистрируется при первой генерации)
+_RECEIPT_FONT_REGISTERED = False
+
+
+def _register_receipt_font() -> str:
+    """Регистрирует шрифт с поддержкой кириллицы. Возвращает имя шрифта для использования."""
+    global _RECEIPT_FONT_REGISTERED
+    if _RECEIPT_FONT_REGISTERED:
+        return "DejaVu"
+    for path in (
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        "/usr/share/fonts/TTF/DejaVuSans.ttf",
+    ):
+        if Path(path).is_file():
+            try:
+                pdfmetrics.registerFont(TTFont("DejaVu", path))
+                _RECEIPT_FONT_REGISTERED = True
+                return "DejaVu"
+            except Exception as e:
+                logger.warning("Could not register font %s: %s", path, e)
+    return "Helvetica"  # кириллица не отобразится, но чек соберётся
+
+
+def _build_receipt_pdf(payment: Payment) -> bytes:
+    """Формирует чек по платежу в формате PDF (оформление как кассовый чек)."""
+    buffer = io.BytesIO()
+    font_name = _register_receipt_font()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        rightMargin=18 * mm,
+        leftMargin=18 * mm,
+        topMargin=12 * mm,
+        bottomMargin=12 * mm,
+    )
+    styles = getSampleStyleSheet()
+    styles.add(
+        ParagraphStyle(
+            name="ReceiptTitle",
+            fontName=font_name,
+            fontSize=14,
+            alignment=1,  # center
+            spaceAfter=2 * mm,
+        )
+    )
+    styles.add(
+        ParagraphStyle(
+            name="ReceiptOrg",
+            fontName=font_name,
+            fontSize=10,
+            alignment=1,
+            spaceAfter=1 * mm,
+        )
+    )
+    styles.add(
+        ParagraphStyle(
+            name="ReceiptRow",
+            fontName=font_name,
+            fontSize=10,
+            spaceAfter=1 * mm,
+        )
+    )
+    styles.add(
+        ParagraphStyle(
+            name="ReceiptFooter",
+            fontName=font_name,
+            fontSize=9,
+            alignment=1,
+            textColor=colors.grey,
+        )
+    )
+
+    created_str = payment.created_at.strftime("%d.%m.%Y %H:%M") if payment.created_at else "—"
+    amount_str = f"{payment.amount:.2f} {payment.currency}"
+
+    # Блок организации
+    story = [
+        Paragraph(settings.receipt_company_name, styles["ReceiptOrg"]),
+        Paragraph(f"ИНН {settings.receipt_inn}", styles["ReceiptOrg"]),
+        Spacer(1, 4 * mm),
+        Paragraph("—" * 32, styles["ReceiptOrg"]),
+        Spacer(1, 4 * mm),
+        Paragraph("КАССОВЫЙ ЧЕК / ОПЛАТА", styles["ReceiptTitle"]),
+        Spacer(1, 4 * mm),
+    ]
+
+    # Таблица полей чека
+    data = [
+        ["ID платежа:", payment.id],
+        ["Номер брони:", payment.booking_id],
+        ["Сумма:", amount_str],
+        ["Статус:", payment.status],
+        ["Дата и время:", created_str],
+    ]
+    if payment.description:
+        data.append(["Назначение:", payment.description])
+
+    t = Table(data, colWidths=[45 * mm, 100 * mm])
+    t.setStyle(
+        TableStyle(
+            [
+                ("FONTNAME", (0, 0), (-1, -1), font_name),
+                ("FONTSIZE", (0, 0), (-1, -1), 10),
+                ("TEXTCOLOR", (0, 0), (0, -1), colors.grey),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+                ("TOPPADDING", (0, 0), (-1, -1), 2),
+                ("LINEBELOW", (0, -1), (-1, -1), 0.5, colors.lightgrey),
+            ]
+        )
+    )
+    story.append(t)
+    story.append(Spacer(1, 6 * mm))
+    story.append(Paragraph("Спасибо за оплату!", styles["ReceiptFooter"]))
+    story.append(Paragraph(f"Чек № {payment.id[:8]}", styles["ReceiptFooter"]))
+
+    doc.build(story)
+    return buffer.getvalue()
+
+
+def _save_receipt_background(payment_id: str) -> None:
+    """Фоновая задача: собрать PDF чека и сохранить в папку receipts."""
+    receipts_dir = Path(settings.receipts_dir)
+    receipts_dir.mkdir(parents=True, exist_ok=True)
+    file_path = receipts_dir / f"{payment_id}.pdf"
+    db = SessionLocal()
+    try:
+        payment = db.query(Payment).filter(Payment.id == payment_id).first()
+        if not payment:
+            logger.warning("Receipt background: payment %s not found", payment_id)
+            return
+        pdf_bytes = _build_receipt_pdf(payment)
+        file_path.write_bytes(pdf_bytes)
+        logger.info("Receipt saved: %s", file_path)
+    except Exception as e:
+        logger.exception("Failed to save receipt for payment %s: %s", payment_id, e)
+    finally:
+        db.close()
+
+
 def _process_payment_sync(payment: Payment) -> None:
-    """
-    Синхронная имитация обработки оплаты.
-    В реальности здесь вызов платёжного шлюза; затем событие в Notification Service.
-    """
+
     payment.status = PaymentStatus.PROCESSING.value
-    # Имитация: например, всегда успех; можно заменить на случай или внешний вызов
     payment.status = PaymentStatus.SUCCESS.value
-    # При неудаче: payment.status = PaymentStatus.FAILED.value; payment.failure_reason = "..."
 
 
 async def _notify_payment_result(payment: Payment) -> None:
@@ -63,10 +208,15 @@ async def _notify_payment_result(payment: Payment) -> None:
 
 
 @router.post("/payments", response_model=PaymentResponse, status_code=201)
-async def create_payment(request: CreatePaymentRequest, db: Session = Depends(get_db)):
+async def create_payment(
+    request: CreatePaymentRequest,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
     """
     Создание платежа. Вызывается Booking Service.
     Статус: CREATED → PROCESSING → SUCCESS или FAILED.
+    Чек PDF строится в фоне и сохраняется в папку receipts.
     """
     metadata_str = None
     if request.metadata is not None:
@@ -90,8 +240,9 @@ async def create_payment(request: CreatePaymentRequest, db: Session = Depends(ge
     db.commit()
     db.refresh(payment)
 
-    # Уведомить Notification Service (не падать при ошибке сети)
     await _notify_payment_result(payment)
+
+    background_tasks.add_task(_save_receipt_background, payment.id)
 
     return _payment_to_response(payment)
 
@@ -130,6 +281,22 @@ async def get_payments_by_booking(booking_id: str, db: Session = Depends(get_db)
         .all()
     )
     return [_payment_to_response(p) for p in items]
+
+
+@router.get("/payments/{payment_id}/receipt", response_class=FileResponse)
+async def get_payment_receipt_pdf(payment_id: uuid.UUID):
+    """Скачать готовый чек по платежу (PDF из папки receipts)."""
+    file_path = Path(settings.receipts_dir) / f"{payment_id}.pdf"
+    if not file_path.is_file():
+        raise HTTPException(
+            status_code=404,
+            detail="Чек ещё не готов или платёж не найден. Подождите несколько секунд после создания платежа.",
+        )
+    return FileResponse(
+        path=str(file_path),
+        media_type="application/pdf",
+        filename=f"receipt_{payment_id}.pdf",
+    )
 
 
 @router.get("/payments/{payment_id}", response_model=PaymentResponse)

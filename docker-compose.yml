@@ -17,6 +17,9 @@ services:
       - "8082:8082"
     environment:
       PAYMENT_NOTIFICATION_SERVICE_URL: http://notification:8083
+      PAYMENT_RECEIPTS_DIR: /app/receipts
+    volumes:
+      - payment_receipts:/app/receipts
     depends_on:
       - notification
     command: uvicorn app.main:app --host 0.0.0.0 --port 8082
@@ -30,3 +33,6 @@ services:
     depends_on:
       - payment
     command: sh -c "python manage.py migrate --noinput && python manage.py runserver 0.0.0.0:8000"
+
+volumes:
+  payment_receipts:

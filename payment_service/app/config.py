@@ -17,6 +17,14 @@ class Settings(BaseSettings):
     # URL Notification Service (вызов после SUCCESS/FAILED)
     notification_service_url: str = "http://localhost:8083"
 
+    # Папка для сохранения чеков (PDF); в Docker — монтируется volume
+    receipts_dir: str = "./receipts"
+
+    # Реквизиты организации для чека
+    receipt_company_name: str = "ООО «Гостиница»"
+    receipt_inn: str = "7707123456"
+    receipt_address: str = "г. Москва, ул. Примерная, д. 1"
+
     class Config:
         env_prefix = "PAYMENT_"
         env_file = ".env"

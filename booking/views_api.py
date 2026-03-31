@@ -11,7 +11,6 @@ from django.conf import settings
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from django.shortcuts import get_object_or_404
 
 from .models import Booking, Room, Guest
 
@@ -36,7 +35,7 @@ def _booking_to_json(booking: Booking) -> dict:
 
 @csrf_exempt
 @require_http_methods(["GET", "POST"])
-def api_bookings_list_or_create(request):
+async def api_bookings_list_or_create(request):
     """GET /api/bookings/ — список. POST /api/bookings/ — создание и вызов Payment Service."""
     if request.method == "GET":
         limit = int(request.GET.get("limit", 20))
@@ -45,23 +44,24 @@ def api_bookings_list_or_create(request):
         qs = Booking.objects.select_related("room", "guest").order_by("-created_at")
         if status:
             qs = qs.filter(status=status)
-        total = qs.count()
-        items = qs[offset : offset + limit]
+        total = await qs.acount()
+        items = [_booking_to_json(b) async for b in qs[offset : offset + limit]]
         return JsonResponse({
-            "items": [_booking_to_json(b) for b in items],
+            "items": items,
             "total": total,
             "limit": limit,
             "offset": offset,
         })
-    return _api_create_booking(request)
+    return await _api_create_booking(request)
 
 
-def _api_create_booking(request):
+async def _api_create_booking(request):
     """POST /api/bookings/ — создание бронирования, вызов Payment Service."""
     try:
         body = json.loads(request.body)
-    except json.JSONDecodeError as e:
+    except json.JSONDecodeError:
         return JsonResponse({"error": "Invalid JSON", "code": "INVALID_JSON"}, status=400)
+
     room_id = body.get("roomId")
     guest_id = body.get("guestId")
     check_in = body.get("checkInDate")
@@ -69,21 +69,33 @@ def _api_create_booking(request):
     adults_count = body.get("adultsCount", 1)
     children_count = body.get("childrenCount", 0)
     special_requests = body.get("specialRequests") or ""
+
     if not all([room_id, guest_id, check_in, check_out]):
         return JsonResponse(
             {"error": "roomId, guestId, checkInDate, checkOutDate required", "code": "VALIDATION"},
             status=400,
         )
+
     from datetime import datetime
     try:
         check_in_date = datetime.strptime(check_in, "%Y-%m-%d").date()
         check_out_date = datetime.strptime(check_out, "%Y-%m-%d").date()
     except ValueError:
         return JsonResponse({"error": "Dates must be YYYY-MM-DD", "code": "VALIDATION"}, status=400)
-    room = get_object_or_404(Room, pk=room_id)
-    guest = get_object_or_404(Guest, pk=guest_id)
+
+    try:
+        room = await Room.objects.aget(pk=room_id)
+    except Room.DoesNotExist:
+        return JsonResponse({"error": "Room not found", "code": "NOT_FOUND"}, status=404)
+
+    try:
+        guest = await Guest.objects.aget(pk=guest_id)
+    except Guest.DoesNotExist:
+        return JsonResponse({"error": "Guest not found", "code": "NOT_FOUND"}, status=404)
+
     if check_in_date >= check_out_date:
         return JsonResponse({"error": "checkOutDate must be after checkInDate", "code": "VALIDATION"}, status=400)
+
     total_price = room.calculate_price(check_in_date, check_out_date)
     booking = Booking(
         room=room,
@@ -96,7 +108,8 @@ def _api_create_booking(request):
         special_requests=special_requests,
         status=Booking.STATUS_PAYMENT_PENDING,
     )
-    booking.save()
+    await booking.asave()
+
     payment_url = getattr(settings, "PAYMENT_SERVICE_URL", "http://localhost:8082").rstrip("/")
     payload = {
         "bookingId": str(booking.booking_id),
@@ -104,12 +117,12 @@ def _api_create_booking(request):
         "currency": "RUB",
     }
     try:
-        with httpx.Client(timeout=10.0) as client:
-            resp = client.post(f"{payment_url}/api/payments", json=payload)
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.post(f"{payment_url}/api/payments", json=payload)
             if resp.status_code not in (200, 201):
                 logger.warning("Payment service returned %s: %s", resp.status_code, resp.text)
                 booking.status = Booking.STATUS_PAYMENT_FAILED
-                booking.save(update_fields=["status"])
+                await booking.asave(update_fields=["status"])
                 return JsonResponse(
                     {"error": "Payment service error", "code": "PAYMENT_ERROR"},
                     status=503,
@@ -117,42 +130,52 @@ def _api_create_booking(request):
     except httpx.RequestError as e:
         logger.exception("Payment service unreachable: %s", e)
         booking.status = Booking.STATUS_PAYMENT_FAILED
-        booking.save(update_fields=["status"])
+        await booking.asave(update_fields=["status"])
         return JsonResponse(
             {"error": "Payment service unreachable", "code": "PAYMENT_UNREACHABLE"},
             status=503,
         )
+
     return JsonResponse(_booking_to_json(booking), status=201)
 
 
 @csrf_exempt
 @require_http_methods(["GET"])
-def api_get_booking(request, booking_id):
+async def api_get_booking(request, booking_id):
     """GET /api/bookings/<id>/ — одно бронирование."""
-    booking = get_object_or_404(Booking, booking_id=booking_id)
+    try:
+        booking = await Booking.objects.aget(booking_id=booking_id)
+    except Booking.DoesNotExist:
+        return JsonResponse({"error": "Booking not found", "code": "NOT_FOUND"}, status=404)
     return JsonResponse(_booking_to_json(booking))
 
 
 @csrf_exempt
 @require_http_methods(["POST"])
-def api_confirm_payment(request, booking_id):
-    """POST /api/bookings/<id>/confirm-payment/ — подтверждение оплаты (вызывает Notification Service)."""
-    booking = get_object_or_404(Booking, booking_id=booking_id)
+async def api_confirm_payment(request, booking_id):
+    """POST /api/bookings/<id>/confirm-payment/ — подтверждение оплаты."""
+    try:
+        booking = await Booking.objects.aget(booking_id=booking_id)
+    except Booking.DoesNotExist:
+        return JsonResponse({"error": "Booking not found", "code": "NOT_FOUND"}, status=404)
     if booking.status != Booking.STATUS_PAYMENT_PENDING:
         return JsonResponse(
             {"error": "Booking status is not PAYMENT_PENDING", "code": "INVALID_STATUS"},
             status=400,
         )
     booking.status = Booking.STATUS_PAID
-    booking.save(update_fields=["status"])
+    await booking.asave(update_fields=["status"])
     return JsonResponse({"ok": True})
 
 
 @csrf_exempt
 @require_http_methods(["POST"])
-def api_cancel_booking(request, booking_id):
+async def api_cancel_booking(request, booking_id):
     """POST /api/bookings/<id>/cancel/ — отмена бронирования."""
-    booking = get_object_or_404(Booking, booking_id=booking_id)
+    try:
+        booking = await Booking.objects.aget(booking_id=booking_id)
+    except Booking.DoesNotExist:
+        return JsonResponse({"error": "Booking not found", "code": "NOT_FOUND"}, status=404)
     booking.status = Booking.STATUS_CANCELLED
-    booking.save(update_fields=["status"])
+    await booking.asave(update_fields=["status"])
     return JsonResponse({"ok": True})
