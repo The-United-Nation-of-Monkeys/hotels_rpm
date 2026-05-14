@@ -1,0 +1,77 @@
+# CD: сборка и публикация образов в GitHub Container Registry (GHCR).
+# Запуск: git tag v1.0.0 && git push origin v1.0.0 — образы получат тег версии и latest.
+# Либо Actions → «CD — Docker images» → Run workflow (поле tag — суффикс образа, без latest для произвольных сборок).
+name: CD — Docker images
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Тег образов (например staging, либо semver без префикса v)"
+        required: true
+        default: "manual"
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Image registry prefix (lowercase)
+        run: |
+          echo "IMAGE_PREFIX=ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Resolve image tags
+        id: tags
+        run: |
+          P="$IMAGE_PREFIX"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            T="${{ github.event.inputs.tag }}"
+            echo "booking=${P}/booking:${T}" >> "$GITHUB_OUTPUT"
+            echo "payment=${P}/payment:${T}" >> "$GITHUB_OUTPUT"
+            echo "notification=${P}/notification:${T}" >> "$GITHUB_OUTPUT"
+          else
+            VER="${GITHUB_REF#refs/tags/}"
+            echo "booking=${P}/booking:${VER},${P}/booking:latest" >> "$GITHUB_OUTPUT"
+            echo "payment=${P}/payment:${VER},${P}/payment:latest" >> "$GITHUB_OUTPUT"
+            echo "notification=${P}/notification:${VER},${P}/notification:latest" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build and push booking (Django)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: ${{ steps.tags.outputs.booking }}
+
+      - name: Build and push payment
+        uses: docker/build-push-action@v6
+        with:
+          context: payment_service
+          file: payment_service/Dockerfile
+          push: true
+          tags: ${{ steps.tags.outputs.payment }}
+
+      - name: Build and push notification
+        uses: docker/build-push-action@v6
+        with:
+          context: notification_service
+          file: notification_service/Dockerfile
+          push: true
+          tags: ${{ steps.tags.outputs.notification }}
