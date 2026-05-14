@@ -17,6 +17,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.shortcuts import get_object_or_404
 
+from .metrics import metrics_response
 from .models import Booking, Room, Guest
 
 logger = logging.getLogger(__name__)
@@ -164,3 +165,13 @@ def api_cancel_booking(request, booking_id):
     booking.status = Booking.STATUS_CANCELLED
     booking.save(update_fields=["status"])
     return JsonResponse({"ok": True})
+
+
+@require_http_methods(["GET"])
+def api_health(request):
+    return JsonResponse({"status": "ok", "service": "booking-service"})
+
+
+@require_http_methods(["GET"])
+def api_metrics(request):
+    return metrics_response()

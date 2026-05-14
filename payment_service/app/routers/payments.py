@@ -207,6 +207,41 @@ async def _notify_payment_result(payment: Payment) -> None:
 
 
 
+async def create_and_process_payment(
+    *,
+    booking_id: int,
+    amount,
+    currency: str,
+    description: str | None,
+    metadata_str: str | None,
+    db: Session,
+) -> Payment:
+    """Создаёт платёж, обрабатывает его и уведомляет Notification Service.
+
+    Используется как из REST-обработчика, так и из Kafka consumer.
+    Не выполняет фоновые задачи (чек PDF) — вызывающая сторона отвечает за это сама.
+    """
+    payment = Payment(
+        id=str(uuid.uuid4()),
+        booking_id=booking_id,
+        status=PaymentStatus.CREATED.value,
+        amount=amount,
+        currency=currency,
+        description=description,
+        metadata_=metadata_str,
+    )
+    db.add(payment)
+    db.commit()
+    db.refresh(payment)
+
+    _process_payment_sync(payment)
+    db.commit()
+    db.refresh(payment)
+
+    await _notify_payment_result(payment)
+    return payment
+
+
 @router.post("/payments", response_model=PaymentResponse, status_code=201)
 async def create_payment(
     request: CreatePaymentRequest,
@@ -214,33 +249,20 @@ async def create_payment(
     db: Session = Depends(get_db),
 ):
     """
-    Создание платежа. Вызывается Booking Service.
+    Создание платежа. Вызывается Booking Service напрямую (REST).
     Статус: CREATED → PROCESSING → SUCCESS или FAILED.
     Чек PDF строится в фоне и сохраняется в папку receipts.
     """
-    metadata_str = None
-    if request.metadata is not None:
-        metadata_str = json.dumps(request.metadata)
+    metadata_str = json.dumps(request.metadata) if request.metadata is not None else None
 
-    payment = Payment(
-        id=str(uuid.uuid4()),
+    payment = await create_and_process_payment(
         booking_id=request.booking_id,
-        status=PaymentStatus.CREATED.value,
         amount=request.amount,
         currency=request.currency,
         description=request.description,
-        metadata_=metadata_str,
+        metadata_str=metadata_str,
+        db=db,
     )
-    db.add(payment)
-    db.commit()
-    db.refresh(payment)
-
-    # Имитация обработки оплаты в том же запросе
-    _process_payment_sync(payment)
-    db.commit()
-    db.refresh(payment)
-
-    await _notify_payment_result(payment)
 
     background_tasks.add_task(_save_receipt_background, payment.id)
 

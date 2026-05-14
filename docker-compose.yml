@@ -47,7 +47,10 @@ services:
     environment:
       PAYMENT_NOTIFICATION_SERVICE_URL: http://notification:8083
       PAYMENT_RECEIPTS_DIR: /app/receipts
-      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      PAYMENT_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      PAYMENT_KAFKA_PAYMENT_TOPIC: payments
+      PAYMENT_KAFKA_CONSUMER_GROUP: payment-service
+      PAYMENT_KAFKA_CONSUMER_ENABLED: "true"
     volumes:
       - payment_receipts:/app/receipts
     depends_on:
@@ -68,5 +71,30 @@ services:
       - kafka
     command: sh -c "python manage.py migrate --noinput && python manage.py runserver 0.0.0.0:8000"
 
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - booking
+      - payment
+      - notification
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - prometheus
+
 volumes:
   payment_receipts:
+  grafana_data:

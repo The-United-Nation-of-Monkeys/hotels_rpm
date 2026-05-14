@@ -25,6 +25,12 @@ class Settings(BaseSettings):
     receipt_inn: str = "7707123456"
     receipt_address: str = "г. Москва, ул. Примерная, д. 1"
 
+    # Kafka consumer
+    kafka_bootstrap_servers: str = "kafka:9092"
+    kafka_payment_topic: str = "payments"
+    kafka_consumer_group: str = "payment-service"
+    kafka_consumer_enabled: bool = True
+
     class Config:
         env_prefix = "PAYMENT_"
         env_file = ".env"

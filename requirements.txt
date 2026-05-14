@@ -1,2 +1,4 @@
 Django>=4.2.0
 httpx>=0.25.0
+prometheus-client>=0.20.0
+kafka-python>=2.0.2

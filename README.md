@@ -400,3 +400,9 @@ python manage.py collectstatic
 4. Проверьте, что создан суперпользователь для доступа к админ-панели
 
 
+## Старт тестов
+```bash
+python3 -m pytest payment_service/tests/test_service_metrics_seed.py && \
+python3 -m pytest notification_service/tests/test_service_metrics_seed.py && \
+python3 manage.py test booking.tests.BookingServiceInfraTests
+```
