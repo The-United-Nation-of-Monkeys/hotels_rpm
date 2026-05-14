@@ -227,3 +227,5 @@ docker build -t hotels-notification:local -f notification_service/Dockerfile not
 | Проверить CD | Push тега `v*` или Run workflow с нужным **tag**, затем `docker pull` с GHCR |
 
 Если нужно расширить CD (деплой на VPS, Kubernetes и т.д.), имеет смысл добавить отдельный workflow или job и описать секреты (`SSH_KEY`, `KUBE_CONFIG` и др.) в этом же стиле.
+
+gbcmrf
